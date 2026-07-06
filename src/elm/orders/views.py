@@ -121,3 +121,105 @@ def order_cancel(request, pk):
         return Response({'code': 0, 'message': '取消成功', 'data': None})
     except Order.DoesNotExist:
         return Response({'code': 4002, 'message': '订单不存在', 'data': None}, status=404)
+
+
+# Merchant 端接口
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def merchant_orders(request):
+    """商家订单列表"""
+    try:
+        merchant = request.user.merchant
+        orders = Order.objects.filter(merchant=merchant).order_by('-created_at')
+        
+        status = request.query_params.get('status')
+        if status:
+            orders = orders.filter(status=status)
+        
+        serializer = OrderSerializer(orders, many=True)
+        return Response({'code': 0, 'message': 'success', 'data': {'items': serializer.data, 'total': orders.count()}})
+    except:
+        return Response({'code': 3001, 'message': '商家不存在', 'data': None}, status=404)
+
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def merchant_accept_order(request, pk):
+    """商家接单"""
+    try:
+        merchant = request.user.merchant
+        order = Order.objects.get(pk=pk, merchant=merchant, status='paid')
+        order.status = 'accepted'
+        order.accepted_at = timezone.now()
+        order.save()
+        return Response({'code': 0, 'message': '接单成功', 'data': OrderSerializer(order).data})
+    except Order.DoesNotExist:
+        return Response({'code': 4002, 'message': '订单不存在或状态不正确', 'data': None}, status=404)
+
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def merchant_reject_order(request, pk):
+    """商家拒单"""
+    try:
+        merchant = request.user.merchant
+        order = Order.objects.get(pk=pk, merchant=merchant, status='paid')
+        order.status = 'cancelled'
+        order.save()
+        return Response({'code': 0, 'message': '已拒单', 'data': None})
+    except Order.DoesNotExist:
+        return Response({'code': 4002, 'message': '订单不存在', 'data': None}, status=404)
+
+
+# Rider 端接口
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def rider_available_orders(request):
+    """骑手可接单列表"""
+    orders = Order.objects.filter(status='ready', rider__isnull=True).order_by('-created_at')
+    serializer = OrderSerializer(orders, many=True)
+    return Response({'code': 0, 'message': 'success', 'data': {'items': serializer.data, 'total': orders.count()}})
+
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def rider_grab_order(request, pk):
+    """骑手抢单"""
+    try:
+        rider = request.user.rider
+        order = Order.objects.get(pk=pk, status='ready', rider__isnull=True)
+        order.rider = rider
+        order.save()
+        return Response({'code': 0, 'message': '抢单成功', 'data': OrderSerializer(order).data})
+    except Order.DoesNotExist:
+        return Response({'code': 4002, 'message': '订单不存在或已被抢', 'data': None}, status=404)
+
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def rider_pickup_order(request, pk):
+    """骑手取餐"""
+    try:
+        rider = request.user.rider
+        order = Order.objects.get(pk=pk, rider=rider, status='ready')
+        order.status = 'picked'
+        order.picked_at = timezone.now()
+        order.save()
+        return Response({'code': 0, 'message': '已取餐', 'data': OrderSerializer(order).data})
+    except Order.DoesNotExist:
+        return Response({'code': 4002, 'message': '订单不存在', 'data': None}, status=404)
+
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def rider_deliver_order(request, pk):
+    """骑手送达"""
+    try:
+        rider = request.user.rider
+        order = Order.objects.get(pk=pk, rider=rider, status='picked')
+        order.status = 'delivered'
+        order.delivered_at = timezone.now()
+        order.save()
+        return Response({'code': 0, 'message': '已送达', 'data': OrderSerializer(order).data})
+    except Order.DoesNotExist:
+        return Response({'code': 4002, 'message': '订单不存在', 'data': None}, status=404)
