@@ -1,0 +1,25 @@
+[project]
+name = "elm"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+authors = [
+    { name = "Wu05011", email = "wuhanjun05011@126.com" }
+]
+requires-python = ">=3.13"
+dependencies = [
+    "celery>=5.6.3",
+    "channels>=4.3.2",
+    "daphne>=4.2.2",
+    "django>=6.0.6",
+    "django-cors-headers>=4.9.0",
+    "djangorestframework>=3.17.1",
+    "redis>=8.0.1",
+]
+
+[project.scripts]
+elm = "elm:main"
+
+[build-system]
+requires = ["uv_build>=0.11.14,<0.12.0"]
+build-backend = "uv_build"
