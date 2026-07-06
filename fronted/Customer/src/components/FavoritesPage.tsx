@@ -1,4 +1,5 @@
-import { ArrowLeft, Star, Coffee, Heart } from 'lucide-react';
+import { Star, Coffee, Heart } from 'lucide-react';
+import { Header } from '@shared';
 
 interface FavoriteStore {
   id: string;
@@ -15,11 +16,8 @@ const favorites: FavoriteStore[] = [
 
 export default function FavoritesPage({ onBack, onStoreClick }: { onBack: () => void; onStoreClick: (id: string) => void }) {
   return (
-    <div className="w-full min-h-screen bg-[#F5F5F5] pb-24">
-      <header className="sticky top-0 z-50 bg-white/95 backdrop-blur-md px-4 py-3 flex items-center border-b border-gray-100 shadow-sm gap-3">
-        <button onClick={onBack} className="text-gray-700"><ArrowLeft size={22}/></button>
-        <h1 className="font-bold text-[17px] text-[#0085FF] flex-1">我的收藏</h1>
-      </header>
+    <div className="w-full min-h-screen bg-[#F5F5F5] pt-14 pb-24">
+      <Header title="我的收藏" onBack={onBack} />
       <div className="p-4 space-y-3">
         {favorites.map(f => (
           <div key={f.id} onClick={() => onStoreClick(f.id)}

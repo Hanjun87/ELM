@@ -1,7 +1,23 @@
 import React from 'react';
 import { BadgeCheck, Edit, FileBadge, MapPin, History, Settings, ChevronRight, LogOut } from 'lucide-react';
+import { toast } from '@shared';
 
 export default function MineTab() {
+  const handleEdit = () => {
+    toast('编辑资料功能开发中');
+  };
+
+  const handleMenuItem = (label: string) => {
+    toast(`${label}功能开发中`);
+  };
+
+  const handleLogout = () => {
+    if (confirm('确认退出登录吗？')) {
+      toast('退出成功');
+      // 实际应用中应该清除登录状态并跳转到登录页
+    }
+  };
+
   return (
     <main className="flex-1 mt-14 pb-28 px-4 overflow-y-auto bg-[#F5F5F5] pt-4 space-y-4">
       {/* Rider Identity */}
@@ -24,7 +40,7 @@ export default function MineTab() {
             <span className="text-[11px] font-bold">实名已认证</span>
           </div>
         </div>
-        <button className="text-[#0085FF] hover:bg-blue-50 p-2 rounded-full transition-colors active:scale-95">
+        <button onClick={handleEdit} className="text-[#0085FF] hover:bg-blue-50 p-2 rounded-full transition-colors active:scale-95">
           <Edit size={20} />
         </button>
       </section>
@@ -49,7 +65,11 @@ export default function MineTab() {
           { icon: <History size={20} className="text-[#00B578]" />, label: '历史记录' },
           { icon: <Settings size={20} className="text-gray-600" />, label: '设置' },
         ].map((item, index) => (
-          <div key={index} className={`flex items-center justify-between p-4 active:bg-gray-50 ${index !== 3 ? 'border-b border-gray-100' : ''}`}>
+          <button
+            key={index}
+            onClick={() => handleMenuItem(item.label)}
+            className={`w-full flex items-center justify-between p-4 active:bg-gray-50 ${index !== 3 ? 'border-b border-gray-100' : ''}`}
+          >
             <div className="flex items-center gap-3">
               <div className="w-8 h-8 rounded-lg bg-gray-50 flex items-center justify-center">
                 {item.icon}
@@ -60,13 +80,13 @@ export default function MineTab() {
               {item.value && <span className={`text-[13px] ${item.valueColor}`}>{item.value}</span>}
               <ChevronRight size={16} className="text-gray-400" />
             </div>
-          </div>
+          </button>
         ))}
       </div>
 
       {/* Action Button */}
       <div className="pt-4 pb-2">
-        <button className="w-full bg-[#FFDAD6] text-[#93000A] py-3.5 rounded-[16px] font-bold text-[16px] flex items-center justify-center gap-2 active:scale-[0.98] transition-transform">
+        <button onClick={handleLogout} className="w-full bg-[#FFDAD6] text-[#93000A] py-3.5 rounded-[16px] font-bold text-[16px] flex items-center justify-center gap-2 active:scale-[0.98] transition-transform">
           <LogOut size={20} />
           退出账号
         </button>

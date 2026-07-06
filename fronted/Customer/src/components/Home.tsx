@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { MapPin, Search, ChevronDown, Utensils, ShoppingBag, Carrot, IceCream, Pill, Coffee, Ticket, Croissant, Store, LayoutGrid, Star } from 'lucide-react';
+import { Header } from '@shared';
 
 interface RestaurantItem {
   id: string;
@@ -48,19 +49,20 @@ export default function Home({ onStoreClick, onSearch }: { onStoreClick: (id: st
   });
 
   return (
-    <div className="w-full pb-6">
-      {/* Header */}
-      <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md px-4 py-3 flex items-center justify-between shadow-sm">
-        <div className="flex items-center gap-1 text-[#0085FF] cursor-pointer hover:opacity-80">
-          <MapPin size={20} className="fill-blue-100" />
-          <span className="font-bold text-base truncate max-w-[100px]">科技园南区</span>
-          <ChevronDown size={16} />
+    <div className="w-full pt-14 pb-6">
+      <Header>
+        <div className="flex items-center gap-3 w-full">
+          <div className="flex items-center gap-1 text-[#0085FF] cursor-pointer hover:opacity-80 shrink-0">
+            <MapPin size={18} />
+            <span className="font-bold text-[15px] truncate max-w-[100px]">科技园南区</span>
+            <ChevronDown size={14} />
+          </div>
+          <div className="flex-1 relative">
+            <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+            <input type="text" placeholder="搜索美食、水果、药店" className="w-full bg-gray-100 rounded-full py-1.5 pl-9 pr-4 text-[13px] focus:outline-none focus:ring-2 focus:ring-blue-100 transition-all placeholder:text-gray-400 font-medium" readOnly />
+          </div>
         </div>
-        <div className="flex-1 ml-4 relative">
-          <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-          <input type="text" placeholder="搜索美食、水果、药店" className="w-full bg-gray-100 rounded-full py-1.5 pl-9 pr-4 text-sm focus:outline-none focus:ring-2 focus:ring-blue-100 transition-all placeholder:text-gray-400 font-medium" readOnly />
-        </div>
-      </header>
+      </Header>
 
       {/* Categories */}
       <div className="grid grid-cols-5 gap-y-5 px-4 py-5 bg-white">
@@ -100,7 +102,7 @@ export default function Home({ onStoreClick, onSearch }: { onStoreClick: (id: st
       </div>
 
       {/* Filters */}
-      <div className="sticky top-[52px] z-30 bg-white/95 backdrop-blur-md px-4 py-3 flex items-center justify-between border-b border-gray-100">
+      <div className="sticky top-14 z-30 bg-white/95 backdrop-blur-md px-4 py-3 flex items-center justify-between border-b border-gray-100">
         <div className="flex gap-5">
           {([['recommend', '综合推荐'], ['sales', '销量'], ['distance', '距离']] as [SortMode, string][]).map(([mode, label]) => (
             <span key={mode} onClick={() => setSortMode(mode)}

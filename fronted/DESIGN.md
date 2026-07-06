@@ -23,7 +23,7 @@ Shared across all four frontend apps.
 | Component | Style |
 |-----------|-------|
 | Cards | `bg-white rounded-[16px] p-4 shadow-[0_4px_12px_rgba(0,0,0,0.03)] border border-gray-50` |
-| Headers | `bg-white/90 backdrop-blur-md shadow-sm h-14` with blue brand text |
+| Headers | `bg-white shadow-[0_2px_8px_rgba(0,0,0,0.04)] h-14` with blue brand text |
 | Bottom Nav | `rounded-t-[20px] shadow-[0_-8px_24px_rgba(0,0,0,0.04)] border-t border-gray-100` |
 | Active Tab | `bg-blue-50 text-[#0085FF] scale-105` |
 | Primary Button | `bg-[#0085FF] text-white font-bold rounded-[12px] py-2.5 active:scale-95 shadow-md` |

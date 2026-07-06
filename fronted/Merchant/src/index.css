@@ -1,5 +1,9 @@
 @import "tailwindcss";
 
+html, body {
+  background-color: #fff;
+}
+
 @layer utilities {
   .pb-safe { padding-bottom: env(safe-area-inset-bottom, 20px); }
   .hide-scrollbar::-webkit-scrollbar { display: none; }

@@ -16,11 +16,22 @@ export default function App() {
   const [isWorking, setIsWorking] = useState(true);
   const [activeTab, setActiveTab] = useState('工作台');
   const [sortByNearest, setSortByNearest] = useState(false);
+  const [searchText, setSearchText] = useState('');
   const [, forceUpdate] = useState(0);
   useEffect(() => subscribe(() => forceUpdate(n => n + 1)), []);
 
   const available = orders.filter(o => o.status === 'available');
-  const visibleOrders = sortByNearest ? [...available].sort((a, b) => a.distanceKm - b.distanceKm) : available;
+
+  // 应用搜索过滤
+  let filtered = available;
+  if (searchText.trim()) {
+    filtered = available.filter(o =>
+      o.storeName.includes(searchText) ||
+      o.no.includes(searchText)
+    );
+  }
+
+  const visibleOrders = sortByNearest ? [...filtered].sort((a, b) => a.distanceKm - b.distanceKm) : filtered;
 
   const handleGrab = (id: number, no: string) => {
     grabOrder(id);
@@ -31,7 +42,7 @@ export default function App() {
     <div className="max-w-md mx-auto bg-[#F5F5F5] min-h-screen relative shadow-2xl flex flex-col font-sans selection:bg-blue-200">
       <Toast />
       {/* Header */}
-      <header className="bg-white/90 backdrop-blur-md shadow-sm fixed top-0 w-full max-w-md h-14 z-50 flex justify-between items-center px-4">
+      <header className="bg-white shadow-[0_2px_8px_rgba(0,0,0,0.04)] fixed top-0 w-full max-w-md h-14 z-50 flex justify-between items-center px-4">
         <div className="flex items-center gap-3">
           <div className="w-8 h-8 rounded-full overflow-hidden bg-blue-50 border border-blue-100">
             <img 
@@ -44,7 +55,7 @@ export default function App() {
             {activeTab === '工作台' || activeTab === '我的' ? '蜂鸟配送' : activeTab}
           </span>
         </div>
-        <button className="text-[#0085FF] active:scale-95 transition-transform p-1">
+        <button onClick={() => toast('消息通知功能开发中')} className="text-[#0085FF] active:scale-95 transition-transform p-1">
           <Bell size={22} strokeWidth={2.5} />
         </button>
       </header>
@@ -95,14 +106,16 @@ export default function App() {
           <div className="flex items-center gap-2.5 mt-5">
             <div className="flex-1 bg-white shadow-[0_2px_8px_rgba(0,0,0,0.03)] p-2.5 px-4 rounded-full flex items-center gap-2.5 border border-gray-100">
               <Search size={18} className="text-gray-400" />
-              <input 
-                type="text" 
-                placeholder="搜索订单或商户" 
+              <input
+                type="text"
+                placeholder="搜索订单或商户"
+                value={searchText}
+                onChange={(e) => setSearchText(e.target.value)}
                 className="bg-transparent border-none focus:outline-none text-[14px] w-full text-gray-800 placeholder:text-gray-400"
               />
             </div>
-            <button className="w-11 h-11 bg-white rounded-full flex items-center justify-center shadow-[0_2px_8px_rgba(0,0,0,0.03)] border border-gray-100 active:scale-95 transition-transform shrink-0">
-              <SlidersHorizontal size={20} className="text-[#0085FF]" />
+            <button onClick={() => setSortByNearest(!sortByNearest)} className="w-11 h-11 bg-white rounded-full flex items-center justify-center shadow-[0_2px_8px_rgba(0,0,0,0.03)] border border-gray-100 active:scale-95 transition-transform shrink-0">
+              <SlidersHorizontal size={20} className={sortByNearest ? "text-[#0085FF]" : "text-gray-400"} />
             </button>
           </div>
 

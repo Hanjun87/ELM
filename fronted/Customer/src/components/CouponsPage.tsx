@@ -1,4 +1,5 @@
-import { ArrowLeft, Ticket, Clock } from 'lucide-react';
+import { Ticket, Clock } from 'lucide-react';
+import { Header } from '@shared';
 import { mockCoupons } from '../store';
 
 export default function CouponsPage({ onBack }: { onBack: () => void }) {
@@ -6,12 +7,10 @@ export default function CouponsPage({ onBack }: { onBack: () => void }) {
   const used = mockCoupons.filter(c => c.status !== 'unused');
 
   return (
-    <div className="w-full min-h-screen bg-[#F5F5F5] pb-24">
-      <header className="sticky top-0 z-50 bg-white/95 backdrop-blur-md px-4 py-3 flex items-center border-b border-gray-100 shadow-sm gap-3">
-        <button onClick={onBack} className="text-gray-700"><ArrowLeft size={22}/></button>
-        <h1 className="font-bold text-[17px] text-[#0085FF] flex-1">优惠券</h1>
-        <span className="text-[12px] text-gray-400">{unused.length}张可用</span>
-      </header>
+    <div className="w-full min-h-screen bg-[#F5F5F5] pt-14 pb-24">
+      <Header onBack={onBack} rightAction={<span className="text-[12px] text-gray-400">{unused.length}张可用</span>}>
+        <h1 className="text-[17px] font-bold text-gray-900">优惠券</h1>
+      </Header>
       <div className="p-4 space-y-4">
         {unused.length > 0 && (
           <div>

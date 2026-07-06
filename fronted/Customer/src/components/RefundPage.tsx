@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { ArrowLeft, Camera, CheckCircle } from 'lucide-react';
+import { Camera, CheckCircle } from 'lucide-react';
+import { Header } from '@shared';
 
 export default function RefundPage({ onBack }: { onBack: () => void }) {
   const [reason, setReason] = useState('');
@@ -8,11 +9,8 @@ export default function RefundPage({ onBack }: { onBack: () => void }) {
 
   if (submitted) {
     return (
-      <div className="w-full min-h-screen bg-[#F5F5F5]">
-        <header className="sticky top-0 z-50 bg-white/95 backdrop-blur-md px-4 py-3 flex items-center border-b border-gray-100 shadow-sm gap-3">
-          <button onClick={onBack} className="text-gray-700"><ArrowLeft size={22}/></button>
-          <h1 className="font-bold text-[17px] text-[#0085FF]">申请退款</h1>
-        </header>
+      <div className="w-full min-h-screen bg-[#F5F5F5] pt-14">
+        <Header title="申请退款" onBack={onBack} />
         <div className="flex flex-col items-center justify-center py-20 px-4">
           <div className="w-20 h-20 rounded-full bg-green-50 flex items-center justify-center mb-4 text-[#00B578]"><CheckCircle size={40} /></div>
           <h2 className="font-bold text-[18px] text-gray-900 mb-2">退款申请已提交</h2>
@@ -24,11 +22,8 @@ export default function RefundPage({ onBack }: { onBack: () => void }) {
   }
 
   return (
-    <div className="w-full min-h-screen bg-[#F5F5F5] pb-24">
-      <header className="sticky top-0 z-50 bg-white/95 backdrop-blur-md px-4 py-3 flex items-center border-b border-gray-100 shadow-sm gap-3">
-        <button onClick={onBack} className="text-gray-700"><ArrowLeft size={22}/></button>
-        <h1 className="font-bold text-[17px] text-[#0085FF]">申请退款</h1>
-      </header>
+    <div className="w-full min-h-screen bg-[#F5F5F5] pt-14 pb-24">
+      <Header title="申请退款" onBack={onBack} />
       <div className="p-4 space-y-4">
         <div className="bg-white rounded-[16px] p-4 shadow-[0_4px_12px_rgba(0,0,0,0.03)] border border-gray-50">
           <h3 className="font-bold text-[14px] text-gray-900 mb-3">退款原因</h3>

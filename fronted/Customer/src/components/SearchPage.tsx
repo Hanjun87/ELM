@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { ArrowLeft, Search, Star, TrendingUp } from 'lucide-react';
+import { Search, Star, TrendingUp } from 'lucide-react';
+import { Header } from '@shared';
 
 const allItems = [
   { type:'merchant', id:'mcdonalds', name:'麦当劳 (科技园店)', desc:'汉堡薯条', rating:4.8, sales:'5000+', price:'', tag:'美食' },
@@ -25,15 +26,14 @@ export default function SearchPage({ onBack, onStoreClick }: { onBack: () => voi
   };
 
   return (
-    <div className="w-full min-h-screen bg-[#F5F5F5]">
-      <header className="sticky top-0 z-50 bg-white/95 backdrop-blur-md px-4 py-3 flex items-center border-b border-gray-100 shadow-sm gap-3">
-        <button onClick={onBack} className="text-gray-700"><ArrowLeft size={22}/></button>
-        <div className="flex-1 relative">
+    <div className="w-full min-h-screen bg-[#F5F5F5] pt-14">
+      <Header onBack={onBack}>
+        <div className="relative flex-1">
           <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
           <input autoFocus type="text" value={query} onChange={e => doSearch(e.target.value)}
             className="w-full bg-gray-100 rounded-full py-2 pl-9 pr-4 text-[14px] outline-none focus:ring-2 focus:ring-blue-100" placeholder="搜索商家或商品" />
         </div>
-      </header>
+      </Header>
 
       {!showResults ? (
         <div className="p-4">

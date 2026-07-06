@@ -1,6 +1,6 @@
 import { useState } from 'react';
-import { ArrowLeft, ChevronRight, MapPin, Ticket } from 'lucide-react';
-import { showModal, closeModal, toast } from '@shared';
+import { ChevronRight, MapPin, Ticket } from 'lucide-react';
+import { showModal, closeModal, toast, Header } from '@shared';
 import { CartItem, placeOrder, mockAddresses, mockCoupons, Address, Coupon } from '../store';
 
 function deliveryFeeFor(distanceKm: number): number {
@@ -67,11 +67,8 @@ export default function Checkout({ cart, onBack }: { cart: CartItem[]; onBack: (
   };
 
   return (
-    <div className="w-full min-h-screen bg-[#F5F5F5] pb-24">
-      <header className="sticky top-0 z-50 bg-white/95 backdrop-blur-md px-4 py-3 flex items-center justify-center border-b border-gray-100 shadow-sm">
-        <button onClick={onBack} className="absolute left-4 text-gray-700 active:scale-95"><ArrowLeft size={22}/></button>
-        <h1 className="font-bold text-[17px] text-gray-900">确认订单</h1>
-      </header>
+    <div className="w-full min-h-screen bg-[#F5F5F5] pt-14 pb-24">
+      <Header title="确认订单" onBack={onBack} />
 
       <div className="p-4 space-y-3">
         {/* Address */}

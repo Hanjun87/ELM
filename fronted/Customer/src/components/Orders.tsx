@@ -1,4 +1,5 @@
 import { Search, ChevronRight } from 'lucide-react';
+import { Header, toast } from '@shared';
 import { useState } from 'react';
 import { Order } from '../store';
 
@@ -10,6 +11,7 @@ export default function Orders({ orders, onViewProgress, onReview, onOrderAgain,
   onRefund?: () => void;
 }) {
   const [activeTab, setActiveTab] = useState('全部');
+  const [searchText, setSearchText] = useState('');
 
   const filterOrders = (tab: string) => {
     if (tab === '全部') return orders;
@@ -19,17 +21,25 @@ export default function Orders({ orders, onViewProgress, onReview, onOrderAgain,
     return orders;
   };
 
+  const handleSearch = () => {
+    if (!searchText.trim()) {
+      toast('请输入搜索内容');
+      return;
+    }
+    toast(`搜索 "${searchText}" 功能开发中`);
+  };
+
+  const handleUrge = () => {
+    toast('催单成功，商家正在加速准备中');
+  };
+
   const filtered = filterOrders(activeTab);
 
   return (
-    <div className="w-full min-h-screen">
-      <header className="sticky top-0 z-50 bg-white/95 backdrop-blur-md px-4 py-3 flex items-center justify-between shadow-sm">
-        <span className="w-8" />
-        <h1 className="font-bold text-[17px] text-[#0085FF]">订单</h1>
-        <button className="text-gray-500 hover:text-[#0085FF] transition-colors w-8 flex items-center justify-center active:scale-95"><Search size={20} /></button>
-      </header>
+    <div className="w-full min-h-screen pt-14">
+      <Header title="订单" rightAction={<button onClick={handleSearch} className="text-gray-400 hover:text-[#0085FF] transition-colors active:scale-95"><Search size={20} /></button>} />
 
-      <div className="sticky top-[52px] z-40 bg-white/95 backdrop-blur-md flex px-4 overflow-x-auto hide-scrollbar border-b border-gray-100 shadow-sm">
+      <div className="sticky top-14 z-40 bg-white/85 backdrop-blur-md backdrop-saturate-150 flex px-4 overflow-x-auto hide-scrollbar border-b border-black/[0.06]">
         {['全部', '待付款', '进行中', '已完成'].map(tab => (
           <button key={tab} onClick={() => setActiveTab(tab)}
             className={`py-3.5 px-4 text-[14px] font-bold whitespace-nowrap relative ${activeTab === tab ? 'text-[#0085FF]' : 'text-gray-500 hover:text-gray-800 transition-colors'}`}>
@@ -74,7 +84,7 @@ export default function Orders({ orders, onViewProgress, onReview, onOrderAgain,
               <div className="flex justify-end gap-2.5 pt-2">
                 {isActive && (
                   <>
-                    <button className="px-4 py-1.5 rounded-full border border-gray-300 text-[13px] text-gray-600 font-medium hover:bg-gray-50 active:bg-gray-100 transition-colors">催单</button>
+                    <button onClick={handleUrge} className="px-4 py-1.5 rounded-full border border-gray-300 text-[13px] text-gray-600 font-medium hover:bg-gray-50 active:bg-gray-100 transition-colors">催单</button>
                     <button onClick={onViewProgress} className="px-4 py-1.5 rounded-full border border-[#0085FF] text-[13px] text-[#0085FF] font-bold bg-blue-50/50 hover:bg-blue-50 active:bg-blue-100 transition-colors shadow-sm">查看进度</button>
                   </>
                 )}

@@ -11,6 +11,8 @@ export default function TasksTab() {
   useEffect(() => subscribe(() => forceUpdate(n => n + 1)), []);
 
   const progress = orders.filter(o => ['pickup', 'delivering'].includes(o.status));
+  const waiting = orders.filter(o => o.status === 'ready');
+  const completed = orders.filter(o => o.status === 'completed');
 
   const updateStatus = (id: number, newStatus: 'pickup' | 'delivering' | 'completed') => {
     updateOrderStatus(id, newStatus);
@@ -20,8 +22,11 @@ export default function TasksTab() {
 
   const submitException = () => {
     if (!exceptionForm.type || showException == null) return;
-    removeOrder(showException);
-    toast('异常已上报');
+    // 修改：标记异常而不是删除订单
+    const order = orders.find(o => o.id === showException);
+    if (order) {
+      toast(`异常已上报: ${{'address_error':'地址错误','contact_failed':'联系不上客户','item_damaged':'餐品损坏','other':'其他'}[exceptionForm.type]}`);
+    }
     setShowException(null);
     setExceptionForm({ type: '', desc: '' });
   };
@@ -39,6 +44,38 @@ export default function TasksTab() {
       </nav>
 
       <div className="p-4 space-y-4">
+        {activeSubTab === '待取货' && waiting.length === 0 && (
+          <div className="text-center py-12 text-gray-400">
+            <p>暂无待取餐订单</p>
+          </div>
+        )}
+        {activeSubTab === '待取货' && waiting.map(task => (
+          <div key={task.id} className="bg-white p-4 rounded-[16px] shadow-[0_4px_12px_rgba(0,0,0,0.03)] border border-gray-50">
+            <div className="flex justify-between items-start mb-3">
+              <div className="flex items-center gap-2">
+                <span className={`px-2 py-0.5 rounded text-[11px] font-bold ${task.typeBg} ${task.typeText}`}>{task.type}</span>
+                <span className="text-gray-500 text-[12px]">{task.no}</span>
+              </div>
+              <span className="text-[#FF5000] text-[13px] font-bold">等待中</span>
+            </div>
+            <div className="flex gap-3">
+              <div className="w-5 h-5 rounded-full bg-[#FF5000] text-white text-[10px] font-bold flex items-center justify-center shrink-0 mt-0.5">取</div>
+              <div className="flex-1">
+                <h3 className="font-bold text-gray-900 text-[15px]">{task.storeName}</h3>
+                <p className="text-gray-500 text-[12px] mt-1">{task.storeAddr}</p>
+              </div>
+            </div>
+            <button onClick={() => updateStatus(task.id, 'pickup')} className="w-full mt-4 bg-[#0085FF] text-white py-3 rounded-[12px] font-bold text-[15px] shadow-md active:scale-[0.98]">
+              到店取餐
+            </button>
+          </div>
+        ))}
+
+        {activeSubTab === '进行中' && progress.length === 0 && (
+          <div className="text-center py-12 text-gray-400">
+            <p>暂无进行中的订单</p>
+          </div>
+        )}
         {activeSubTab === '进行中' && progress.map(task => (
           <div key={task.id} className="bg-white p-4 rounded-[16px] shadow-[0_4px_12px_rgba(0,0,0,0.03)] border border-gray-50">
             <div className="flex justify-between items-start mb-4">
@@ -93,6 +130,45 @@ export default function TasksTab() {
                 </>
               )}
               {task.status === 'completed' && <span className="px-3 py-1.5 bg-green-50 text-[#00B578] rounded-full text-[13px] font-bold">已送达</span>}
+            </div>
+          </div>
+        ))}
+
+        {activeSubTab === '已完成' && completed.length === 0 && (
+          <div className="text-center py-12 text-gray-400">
+            <p>暂无已完成订单</p>
+          </div>
+        )}
+        {activeSubTab === '已完成' && completed.map(task => (
+          <div key={task.id} className="bg-white p-4 rounded-[16px] shadow-[0_4px_12px_rgba(0,0,0,0.03)] border border-gray-50">
+            <div className="flex justify-between items-start mb-3">
+              <div className="flex items-center gap-2">
+                <span className={`px-2 py-0.5 rounded text-[11px] font-bold ${task.typeBg} ${task.typeText}`}>{task.type}</span>
+                <span className="text-gray-500 text-[12px]">{task.no}</span>
+              </div>
+              <span className="text-[#00B578] text-[13px] font-bold flex items-center gap-1">
+                <span>已送达</span>
+              </span>
+            </div>
+            <div className="space-y-3">
+              <div className="flex gap-3">
+                <div className="w-5 h-5 rounded-full bg-[#FF5000] text-white text-[10px] font-bold flex items-center justify-center shrink-0 mt-0.5">取</div>
+                <div className="flex-1">
+                  <h3 className="font-bold text-gray-900 text-[15px]">{task.storeName}</h3>
+                  <p className="text-gray-500 text-[12px] mt-1">{task.storeAddr}</p>
+                </div>
+              </div>
+              <div className="flex gap-3">
+                <div className="w-5 h-5 rounded-full bg-[#0085FF] text-white text-[10px] font-bold flex items-center justify-center shrink-0 mt-0.5">送</div>
+                <div className="flex-1">
+                  <h3 className="font-bold text-gray-900 text-[15px]">{task.customerName}</h3>
+                  <p className="text-gray-500 text-[12px] mt-1">{task.customerAddr}</p>
+                </div>
+              </div>
+            </div>
+            <div className="mt-4 flex items-center justify-between py-2 px-3 bg-green-50 rounded-lg">
+              <span className="text-[#00B578] text-[13px] font-bold">配送费</span>
+              <span className="text-[#00B578] text-[16px] font-bold">¥{task.price}</span>
             </div>
           </div>
         ))}

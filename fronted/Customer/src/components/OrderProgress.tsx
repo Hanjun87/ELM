@@ -1,15 +1,21 @@
-import { ArrowLeft, Phone, MessageCircle } from 'lucide-react';
+import { Phone, MessageCircle } from 'lucide-react';
+import { Header, toast } from '@shared';
 
 export default function OrderProgress({ onBack }: { onBack: () => void }) {
   const steps = ['已接单', '到店', '配送中', '送达'];
   const currentStep = 1; // "到店" — would be dynamic from order state
 
+  const handleMessage = () => {
+    toast('消息功能开发中');
+  };
+
+  const handleCall = () => {
+    toast('电话功能开发中');
+  };
+
   return (
-    <div className="w-full min-h-screen bg-[#F5F5F5]">
-      <header className="sticky top-0 z-50 bg-white/95 backdrop-blur-md px-4 py-3 flex items-center justify-center border-b border-gray-100 shadow-sm">
-        <button onClick={onBack} className="absolute left-4 text-gray-700 active:scale-95"><ArrowLeft size={22}/></button>
-        <h1 className="font-bold text-[17px] text-gray-900">订单进度</h1>
-      </header>
+    <div className="w-full min-h-screen bg-[#F5F5F5] pt-14">
+      <Header title="订单进度" onBack={onBack} />
 
       {/* Map Placeholder */}
       <div className="w-full h-72 bg-blue-50 relative flex items-center justify-center overflow-hidden">
@@ -51,8 +57,8 @@ export default function OrderProgress({ onBack }: { onBack: () => void }) {
               </div>
             </div>
             <div className="flex gap-2.5 shrink-0">
-              <button className="w-9 h-9 rounded-full border border-gray-200 flex items-center justify-center text-gray-600 active:bg-gray-50 transition-colors"><MessageCircle size={18}/></button>
-              <button className="w-9 h-9 rounded-full bg-[#0085FF] text-white flex items-center justify-center active:bg-blue-600 transition-colors shadow-sm"><Phone size={18}/></button>
+              <button onClick={handleMessage} className="w-9 h-9 rounded-full border border-gray-200 flex items-center justify-center text-gray-600 active:bg-gray-50 transition-colors"><MessageCircle size={18}/></button>
+              <button onClick={handleCall} className="w-9 h-9 rounded-full bg-[#0085FF] text-white flex items-center justify-center active:bg-blue-600 transition-colors shadow-sm"><Phone size={18}/></button>
             </div>
           </div>
         </div>

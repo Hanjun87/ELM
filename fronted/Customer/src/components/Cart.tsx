@@ -1,4 +1,5 @@
 import { MapPin, ChevronRight, CheckCircle2, Minus, Plus, ShoppingCart } from 'lucide-react';
+import { Header } from '@shared';
 import { CartItem, updateCartItem, clearCart } from '../store';
 
 const CheckIcon = ({ checked, onClick }: { checked: boolean; onClick: () => void }) => (
@@ -16,11 +17,7 @@ export default function Cart({ cart, onCheckout }: { cart: CartItem[]; onCheckou
 
   return (
     <div className="w-full pb-[140px]">
-      <header className="sticky top-0 z-50 bg-white/95 backdrop-blur-md px-4 py-3 flex items-center justify-between shadow-sm">
-        <span className="w-8" />
-        <h1 className="font-bold text-[17px] text-[#0085FF]">购物车</h1>
-        <button onClick={() => { clearCart(); }} className="text-gray-500 hover:text-[#0085FF] transition-colors w-8 flex items-center justify-center active:scale-95 text-[13px] font-medium">清空</button>
-      </header>
+      <Header title="购物车" rightAction={cart.length > 0 ? <button onClick={() => clearCart()} className="text-gray-400 hover:text-[#FF5000] text-[13px] font-medium transition-colors">清空</button> : undefined} />
 
       {cart.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-24 text-gray-400">

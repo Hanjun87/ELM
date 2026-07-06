@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { ArrowLeft, Send, MessageCircle, Phone } from 'lucide-react';
+import { Send, MessageCircle, Phone } from 'lucide-react';
+import { Header } from '@shared';
 
 const autoReplies: Record<string, string> = {
   '配送': '您的订单正在配送中，骑手预计在预计时间内送达，请耐心等待。',
@@ -22,13 +23,13 @@ export default function ServicePage({ onBack }: { onBack: () => void }) {
   };
 
   return (
-    <div className="w-full h-[100dvh] bg-[#F5F5F5] flex flex-col">
-      <header className="bg-white/95 backdrop-blur-md px-4 py-3 flex items-center border-b border-gray-100 shadow-sm gap-3 shrink-0">
-        <button onClick={onBack} className="text-gray-700"><ArrowLeft size={22}/></button>
-        <MessageCircle size={20} className="text-[#0085FF]" />
-        <h1 className="font-bold text-[17px] text-[#0085FF] flex-1">客服中心</h1>
-        <button className="text-[#0085FF] p-1"><Phone size={20}/></button>
-      </header>
+    <div className="w-full h-[100dvh] bg-[#F5F5F5] flex flex-col pt-14">
+      <Header onBack={onBack} rightAction={<button className="text-[#0085FF]"><Phone size={20} /></button>}>
+        <div className="flex items-center gap-2">
+          <MessageCircle size={18} className="text-[#0085FF]" />
+          <h1 className="text-[17px] font-bold text-gray-900">客服中心</h1>
+        </div>
+      </Header>
 
       <div className="flex-1 overflow-y-auto p-4 space-y-3">
         {msgs.map((m, i) => (

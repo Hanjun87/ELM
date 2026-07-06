@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { ArrowLeft, MapPin, Plus, Check, Edit3, Trash2 } from 'lucide-react';
+import { MapPin, Plus, Check, Edit3, Trash2 } from 'lucide-react';
+import { Header } from '@shared';
 import { mockAddresses, Address } from '../store';
 
 export default function AddressPage({ onBack }: { onBack: () => void }) {
@@ -21,12 +22,10 @@ export default function AddressPage({ onBack }: { onBack: () => void }) {
 
   if (showForm) {
     return (
-      <div className="w-full min-h-screen bg-[#F5F5F5]">
-        <header className="sticky top-0 z-50 bg-white/95 backdrop-blur-md px-4 py-3 flex items-center border-b border-gray-100 shadow-sm gap-3">
-          <button onClick={() => setShowForm(false)} className="text-gray-700"><ArrowLeft size={22}/></button>
-          <h1 className="font-bold text-[17px] text-[#0085FF] flex-1">{editing ? '编辑地址' : '新增地址'}</h1>
-          <button onClick={save} className="text-[#0085FF] font-bold text-[14px]">保存</button>
-        </header>
+      <div className="w-full min-h-screen bg-[#F5F5F5] pt-14">
+        <Header onBack={() => setShowForm(false)} rightAction={<button onClick={save} className="text-[#0085FF] font-bold text-[15px]">保存</button>}>
+          <h1 className="text-[17px] font-bold text-gray-900">{editing ? '编辑地址' : '新增地址'}</h1>
+        </Header>
         <div className="p-4 space-y-3">
           <div className="flex gap-2">
             {['公司','家','学校','其他'].map(t => (
@@ -43,12 +42,8 @@ export default function AddressPage({ onBack }: { onBack: () => void }) {
   }
 
   return (
-    <div className="w-full min-h-screen bg-[#F5F5F5] pb-24">
-      <header className="sticky top-0 z-50 bg-white/95 backdrop-blur-md px-4 py-3 flex items-center border-b border-gray-100 shadow-sm gap-3">
-        <button onClick={onBack} className="text-gray-700"><ArrowLeft size={22}/></button>
-        <h1 className="font-bold text-[17px] text-[#0085FF] flex-1">收货地址</h1>
-        <button onClick={openNew} className="text-[#0085FF]"><Plus size={22}/></button>
-      </header>
+    <div className="w-full min-h-screen bg-[#F5F5F5] pt-14 pb-24">
+      <Header title="收货地址" onBack={onBack} rightAction={<button onClick={openNew} className="text-[#0085FF]"><Plus size={20} /></button>} />
       <div className="p-4 space-y-3">
         {addrs.map(a => (
           <div key={a.id} className={`bg-white rounded-[16px] p-4 shadow-[0_4px_12px_rgba(0,0,0,0.03)] border ${a.isDefault ? 'border-[#0085FF]' : 'border-gray-50'}`}>

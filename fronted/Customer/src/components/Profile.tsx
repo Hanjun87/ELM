@@ -1,15 +1,18 @@
 import { Settings, Smartphone, MapPin, Heart, HeadphonesIcon, Gavel, Handshake } from 'lucide-react';
+import { Header, toast } from '@shared';
 
 export default function Profile({ onSettings, onAddress, onCoupons, onService, onFavorites }: { onSettings?: () => void; onAddress?: () => void; onCoupons?: () => void; onService?: () => void; onFavorites?: () => void }) {
+  const handleToolClick = (label: string, action?: () => void) => {
+    if (action) {
+      action();
+    } else {
+      toast(`${label}功能开发中`);
+    }
+  };
+
   return (
-    <div className="w-full min-h-screen">
-      <header className="sticky top-0 z-50 bg-white/95 backdrop-blur-md px-4 py-3 flex items-center justify-between">
-        <span className="w-8" />
-        <h1 className="font-bold text-[17px] text-[#0085FF]">我的</h1>
-        <button onClick={onSettings} className="text-gray-500 hover:text-[#0085FF] active:scale-95 w-8 flex items-center justify-center transition-colors">
-          <Settings size={22} />
-        </button>
-      </header>
+    <div className="w-full min-h-screen pt-14">
+      <Header title="我的" rightAction={<button onClick={onSettings} className="text-gray-400 hover:text-[#0085FF] active:scale-95 transition-colors"><Settings size={20} /></button>} />
 
       {/* User Info */}
       <div className="px-5 pt-3 pb-7 bg-white rounded-b-[24px] shadow-sm relative overflow-hidden">
@@ -47,10 +50,10 @@ export default function Profile({ onSettings, onAddress, onCoupons, onService, o
               { icon: MapPin, label: '收货地址', action: onAddress },
               { icon: Heart, label: '我的收藏', action: onFavorites },
               { icon: HeadphonesIcon, label: '客服中心', action: onService },
-              { icon: Gavel, label: '资质规则', action: () => {} },
-              { icon: Handshake, label: '商务合作', action: () => {} }
+              { icon: Gavel, label: '资质规则', action: undefined },
+              { icon: Handshake, label: '商务合作', action: undefined }
             ].map((tool, idx) => (
-              <div key={idx} onClick={() => tool.action?.()} className="flex flex-col items-center gap-2.5 cursor-pointer group hover:scale-105 active:scale-95 transition-transform">
+              <div key={idx} onClick={() => handleToolClick(tool.label, tool.action)} className="flex flex-col items-center gap-2.5 cursor-pointer group hover:scale-105 active:scale-95 transition-transform">
                 <div className="w-10 h-10 rounded-full bg-gray-50 flex items-center justify-center group-hover:bg-blue-50 transition-colors shadow-sm">
                   <tool.icon size={20} className="text-gray-500 group-hover:text-[#0085FF] transition-colors" />
                 </div>

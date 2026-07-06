@@ -40,7 +40,7 @@ export default function App() {
   if (subPage) {
     return (
       <div className="max-w-md mx-auto min-h-screen bg-[#F5F5F5] relative font-sans">
-        <header className="bg-white border-b border-gray-100 flex items-center px-4 h-14 sticky top-0 z-10 gap-3">
+        <header className="bg-white shadow-[0_2px_8px_rgba(0,0,0,0.04)] flex items-center px-4 h-14 sticky top-0 z-10 gap-3">
           <button onClick={closeSubPage} className="flex items-center gap-1 text-[#0085FF] font-medium text-[14px]">← 返回</button>
           <span className="font-bold text-[17px] text-gray-900">{subPage === 'reviews' ? '评价管理' : '营销活动'}</span>
         </header>
@@ -54,7 +54,7 @@ export default function App() {
 
   return (
     <div className="max-w-md mx-auto bg-[#F5F5F5] min-h-screen relative shadow-2xl flex flex-col font-sans selection:bg-blue-200">
-      <header className="bg-white/90 backdrop-blur-md shadow-sm fixed top-0 w-full max-w-md h-14 z-50 flex justify-between items-center px-4 border-b border-gray-100">
+      <header className="bg-white shadow-[0_2px_8px_rgba(0,0,0,0.04)] fixed top-0 w-full max-w-md h-14 z-50 flex justify-between items-center px-4">
         <div className="flex items-center gap-3">
           <div className="w-8 h-8 rounded-full bg-blue-50 border border-blue-100 flex items-center justify-center text-[#0085FF] font-bold text-sm">店</div>
           <span className="font-bold text-[18px] text-[#0085FF] tracking-tight">商家管理后台</span>
