@@ -178,3 +178,33 @@ console.log('API Response:', response);
 ---
 
 更多信息请查看 [API 文档](02-api-design.md)
+
+## 生产环境部署
+
+### 环境变量配置
+```bash
+# 复制环境变量模板
+cp .env.example .env
+
+# 编辑 .env 文件，设置以下变量:
+# - SECRET_KEY: 使用 python -c "from django.core.management.utils import get_random_secret_key; print(get_random_secret_key())" 生成
+# - ALLOWED_HOSTS: 你的域名
+# - 数据库配置
+```
+
+### 生产环境运行
+```bash
+# 设置环境变量
+export DJANGO_SETTINGS_MODULE=config.settings_prod
+
+# 收集静态文件
+python manage.py collectstatic
+
+# 使用 Gunicorn 运行
+gunicorn config.wsgi:application --bind 0.0.0.0:8000
+```
+
+### 安全检查
+```bash
+python manage.py check --deploy
+```
