@@ -1,6 +1,5 @@
 import { api } from './config';
 
-// 认证接口
 export const authAPI = {
   login: (phone: string, password: string) =>
     api.post('/auth/login/', { phone, password }),
@@ -11,13 +10,11 @@ export const authAPI = {
   me: () => api.get('/auth/me/'),
 };
 
-// 商家接口
 export const merchantAPI = {
   list: () => api.get('/merchants/'),
   detail: (id: number) => api.get(`/merchants/${id}/`),
 };
 
-// 商品接口
 export const productAPI = {
   list: (merchantId: number, category?: string) => 
     api.get(`/merchants/${merchantId}/products/`, { params: { category } }),
@@ -25,11 +22,20 @@ export const productAPI = {
   categories: () => api.get('/categories/'),
 };
 
-// 订单接口
 export const orderAPI = {
   list: (status?: string) => api.get('/orders/', { params: { status } }),
   detail: (id: number) => api.get(`/orders/${id}/`),
   create: (data: any) => api.post('/orders/create/', data),
+  pay: (id: number) => api.post(`/orders/${id}/pay/`),
+  cancel: (id: number) => api.post(`/orders/${id}/cancel/`),
+};
+
+export const addressAPI = {
+  list: () => api.get('/addresses/'),
+  create: (data: any) => api.post('/addresses/', data),
+  update: (id: number, data: any) => api.patch(`/addresses/${id}/`, data),
+  delete: (id: number) => api.delete(`/addresses/${id}/`),
+  setDefault: (id: number) => api.post(`/addresses/${id}/set_default/`),
 };
 
 export default {
@@ -37,4 +43,5 @@ export default {
   merchant: merchantAPI,
   product: productAPI,
   order: orderAPI,
+  address: addressAPI,
 };

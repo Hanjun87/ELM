@@ -92,3 +92,32 @@ def order_create(request):
         'message': '订单创建成功',
         'data': serializer.data
     }, status=201)
+
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def order_pay(request, pk):
+    """支付订单"""
+    try:
+        order = Order.objects.get(pk=pk, customer=request.user, status='pending')
+        order.status = 'paid'
+        order.paid_at = timezone.now()
+        order.save()
+        return Response({'code': 0, 'message': '支付成功', 'data': OrderSerializer(order).data})
+    except Order.DoesNotExist:
+        return Response({'code': 4002, 'message': '订单不存在', 'data': None}, status=404)
+
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def order_cancel(request, pk):
+    """取消订单"""
+    try:
+        order = Order.objects.get(pk=pk, customer=request.user)
+        if order.status not in ['pending', 'paid']:
+            return Response({'code': 4001, 'message': '订单状态不允许取消', 'data': None}, status=400)
+        order.status = 'cancelled'
+        order.save()
+        return Response({'code': 0, 'message': '取消成功', 'data': None})
+    except Order.DoesNotExist:
+        return Response({'code': 4002, 'message': '订单不存在', 'data': None}, status=404)
