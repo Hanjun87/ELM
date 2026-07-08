@@ -2,27 +2,131 @@
 
 ## 环境要求
 
-| 工具 | 开发环境 | 生产环境 |
-|------|---------|---------|
-| Python | 3.13+ | 3.13+ |
-| Node.js | 18+ | 18+（构建时需要） |
-| uv | 最新 | 最新 |
-| 数据库 | SQLite（内置） | PostgreSQL 14+ |
-| Redis | 可选 | 必须（Channels 多进程） |
-| Web Server | Django runserver | Nginx + Daphne |
+| 工具 | 开发环境 | 生产环境 | Docker |
+|------|---------|---------|--------|
+| Python | 3.13+ | 3.13+ | ✅ (镜像内置) |
+| Node.js | 18+ | 18+（构建时需要） | ✅ (镜像内置) |
+| uv | 最新 | 最新 | ✅ (镜像内置) |
+| 数据库 | SQLite（内置） | PostgreSQL 14+ | ✅ PostgreSQL 16 |
+| Redis | 可选 | 必须（Channels 多进程） | ✅ Redis 7 |
+| Web Server | Django runserver | Nginx + Daphne | ✅ Daphne + Nginx |
+| Docker | — | 可选 | ✅ 必须 |
 
 ---
 
-## 一、开发环境部署
+## 一、Docker 部署（推荐）
 
-### 1.1 克隆仓库
+### 1.1 前置条件
+
+```bash
+# 检查 Docker 版本
+docker --version       # Docker 20.10+
+docker-compose --version  # Docker Compose v2.0+
+```
+
+### 1.2 配置环境变量
+
+```bash
+# 复制环境变量模板
+cp .env.docker .env
+
+# 编辑 .env 文件，必须设置：
+# - SECRET_KEY (使用 python -c "from django.core.management.utils import get_random_secret_key; print(get_random_secret_key())" 生成)
+# - DB_PASSWORD (强密码)
+```
+
+`.env` 示例：
+```bash
+SECRET_KEY=your-generated-secret-key-here
+DB_PASSWORD=strong-database-password
+ALLOWED_HOSTS=localhost,127.0.0.1
+CORS_ALLOWED_ORIGINS=http://localhost:3000,http://localhost:3001,http://localhost:3002,http://localhost:3003
+```
+
+### 1.3 启动服务
+
+```bash
+# 构建并启动所有服务（后端 + 数据库 + Redis + 4个前端）
+docker-compose up -d
+
+# 查看日志
+docker-compose logs -f backend
+
+# 查看运行状态
+docker-compose ps
+```
+
+启动完成后访问：
+- **后端 API**: http://localhost:8000/api/v1/
+- **客户端**: http://localhost:3000
+- **商家端**: http://localhost:3001
+- **骑手端**: http://localhost:3002
+- **管理端**: http://localhost:3003
+
+测试账号（自动初始化）：
+| 角色 | 手机号 | 密码 |
+|------|--------|------|
+| 客户 | 13800001000 | customer |
+| 商家 | 13800002000 | merchant |
+| 骑手 | 13800003000 | rider |
+| 管理员 | 13800004000 | manager |
+
+### 1.4 常用 Docker 命令
+
+```bash
+# 停止所有服务
+docker-compose down
+
+# 停止并删除数据卷（⚠️ 会删除数据库数据）
+docker-compose down -v
+
+# 重新构建镜像（代码变更后）
+docker-compose build
+
+# 重启单个服务
+docker-compose restart backend
+
+# 查看服务日志
+docker-compose logs backend
+docker-compose logs -f customer  # 实时跟踪
+
+# 进入容器执行命令
+docker-compose exec backend python manage.py shell
+docker-compose exec backend python manage.py createsuperuser
+
+# 查看数据库
+docker-compose exec postgres psql -U elm_user -d elm_db
+```
+
+### 1.5 开发模式（Docker）
+
+如果只想在 Docker 里跑后端（SQLite），前端本地 npm 启动：
+
+```bash
+# 启动后端 + 挂载源码（热重载）
+docker-compose -f docker-compose.yml -f docker-compose.dev.yml up backend
+
+# 另一终端启动前端
+cd fronted/Customer && npm run dev
+```
+
+开发模式特点：
+- 后端使用 SQLite（无需 PostgreSQL/Redis）
+- 源码挂载到容器，修改立即生效
+- `DEBUG=True`，CORS 允许所有来源
+
+---
+
+## 二、手动部署（开发环境）
+
+### 2.1 克隆仓库
 
 ```bash
 git clone <repo-url>
 cd ELM
 ```
 
-### 1.2 后端初始化
+### 2.2 后端初始化
 
 ```bash
 cd src/elm
@@ -43,7 +147,7 @@ uv run python manage.py add_more_data
 uv run python manage.py runserver
 ```
 
-### 1.3 前端初始化（选一个角色）
+### 2.3 前端初始化（选一个角色）
 
 ```bash
 # 客户端
@@ -61,7 +165,7 @@ cd fronted/Manager && npm install && npm run dev
 
 > 所有前端默认均运行在 `http://localhost:3000`，不可同时开多个。
 
-### 1.4 使用启动脚本
+### 2.4 使用启动脚本
 
 ```bash
 # 项目根目录
@@ -71,9 +175,9 @@ chmod +x start.sh
 
 ---
 
-## 二、生产环境部署
+## 三、生产环境部署（手动）
 
-### 2.1 环境变量配置
+### 3.1 环境变量配置
 
 复制示例文件并编辑：
 
@@ -104,7 +208,7 @@ DB_PORT=5432
 REDIS_URL=redis://localhost:6379/0
 ```
 
-### 2.2 PostgreSQL 配置
+### 3.2 PostgreSQL 配置
 
 ```bash
 # 创建数据库和用户
@@ -118,7 +222,7 @@ GRANT ALL PRIVILEGES ON DATABASE elm_db TO elm_user;
 cd src/elm && uv add psycopg2-binary
 ```
 
-### 2.3 后端生产部署
+### 3.3 后端生产部署
 
 ```bash
 cd src/elm
@@ -151,7 +255,7 @@ uv run daphne config.asgi:application --bind 0.0.0.0 --port 8000
 uv run gunicorn config.wsgi:application --bind 0.0.0.0:8000 --workers 4
 ```
 
-### 2.4 前端生产构建
+### 3.4 前端生产构建
 
 ```bash
 # 各前端分别构建
@@ -161,7 +265,7 @@ cd fronted/Rider    && npm install && npm run build
 cd fronted/Manager  && npm install && npm run build
 ```
 
-### 2.5 Nginx 配置
+### 3.5 Nginx 配置
 
 ```nginx
 # /etc/nginx/sites-available/elm
@@ -224,7 +328,7 @@ sudo ln -s /etc/nginx/sites-available/elm /etc/nginx/sites-enabled/
 sudo nginx -t && sudo nginx -s reload
 ```
 
-### 2.6 Systemd 服务
+### 3.6 Systemd 服务
 
 ```ini
 # /etc/systemd/system/elm-backend.service
@@ -254,7 +358,7 @@ sudo systemctl status elm-backend
 
 ---
 
-## 三、常用运维命令
+## 四、常用运维命令
 
 ```bash
 # 查看日志（生产环境）
@@ -273,7 +377,7 @@ uv run python manage.py clearsessions
 
 ---
 
-## 四、环境差异对照
+## 五、环境差异对照
 
 | 配置项 | 开发环境 | 生产环境 |
 |--------|---------|---------|
@@ -289,7 +393,7 @@ uv run python manage.py clearsessions
 
 ---
 
-## 五、健康检查
+## 六、健康检查
 
 ```bash
 # 后端健康检查

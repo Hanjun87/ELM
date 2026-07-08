@@ -1,0 +1,117 @@
+x-backend-env: &backend-env
+  DJANGO_SETTINGS_MODULE: config.settings_prod
+  SECRET_KEY: ${SECRET_KEY}
+  DEBUG: "False"
+  ALLOWED_HOSTS: ${ALLOWED_HOSTS:-localhost,127.0.0.1}
+  CORS_ALLOW_ALL: "False"
+  CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS:-http://localhost:3000,http://localhost:3001,http://localhost:3002,http://localhost:3003}
+  DB_NAME: ${DB_NAME:-elm_db}
+  DB_USER: ${DB_USER:-elm_user}
+  DB_PASSWORD: ${DB_PASSWORD}
+  DB_HOST: postgres
+  DB_PORT: "5432"
+  REDIS_URL: redis://redis:6379/0
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${DB_NAME:-elm_db}
+      POSTGRES_USER: ${DB_USER:-elm_user}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-elm_user} -d ${DB_NAME:-elm_db}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    environment: *backend-env
+    ports:
+      - "8000:8000"
+    volumes:
+      - media_data:/app/src/elm/media
+      - static_data:/app/src/elm/staticfiles
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/api/v1/merchants/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+
+  customer:
+    build:
+      context: .
+      dockerfile: fronted/Customer/Dockerfile
+      args:
+        VITE_API_BASE_URL: ${CUSTOMER_API_BASE_URL:-}
+    restart: unless-stopped
+    ports:
+      - "3000:80"
+    depends_on:
+      - backend
+
+  merchant:
+    build:
+      context: .
+      dockerfile: fronted/Merchant/Dockerfile
+      args:
+        VITE_API_BASE_URL: ${MERCHANT_API_BASE_URL:-}
+    restart: unless-stopped
+    ports:
+      - "3001:80"
+    depends_on:
+      - backend
+
+  rider:
+    build:
+      context: .
+      dockerfile: fronted/Rider/Dockerfile
+      args:
+        VITE_API_BASE_URL: ${RIDER_API_BASE_URL:-}
+    restart: unless-stopped
+    ports:
+      - "3002:80"
+    depends_on:
+      - backend
+
+  manager:
+    build:
+      context: .
+      dockerfile: fronted/Manager/Dockerfile
+      args:
+        VITE_API_BASE_URL: ${MANAGER_API_BASE_URL:-}
+    restart: unless-stopped
+    ports:
+      - "3003:80"
+    depends_on:
+      - backend
+
+volumes:
+  postgres_data:
+  redis_data:
+  media_data:
+  static_data:

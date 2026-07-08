@@ -1,0 +1,48 @@
+# Python
+.venv/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.egg-info/
+*.egg
+dist/
+build/
+.pytest_cache/
+.coverage
+htmlcov/
+src/elm/db.sqlite3
+src/elm/media/
+src/elm/staticfiles/
+
+# Node
+node_modules/
+fronted/*/dist/
+fronted/*/node_modules/
+
+# Git
+.git/
+.gitignore
+
+# Editor / OS
+.DS_Store
+.idea/
+.vscode/
+*.swp
+*.swo
+Thumbs.db
+
+# Env files (don't bake secrets into image)
+.env
+.env.*
+!.env.docker
+!.env.example
+
+# Docs (not needed in image)
+docs/
+*.md
+!README.md
+
+# Test artefacts
+.cache/
+coverage/

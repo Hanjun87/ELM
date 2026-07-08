@@ -1,0 +1,46 @@
+# docker-compose.dev.yml — 开发环境覆盖
+# 用法: docker-compose -f docker-compose.yml -f docker-compose.dev.yml up backend
+#
+# 开发时通常只在 Docker 里跑后端（SQLite），前端本地 npm run dev 即可。
+
+services:
+  # 开发环境用 SQLite，不需要 postgres/redis
+  postgres:
+    profiles: ["production"]
+
+  redis:
+    profiles: ["production"]
+
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    environment:
+      DJANGO_SETTINGS_MODULE: config.settings
+      DEBUG: "True"
+      SECRET_KEY: "dev-insecure-key-do-not-use-in-production"
+      ALLOWED_HOSTS: "localhost,127.0.0.1,0.0.0.0"
+      CORS_ALLOW_ALL: "True"
+    volumes:
+      # 挂载源码，修改后无需重建镜像
+      - ./src/elm:/app/src/elm
+      # 持久化 SQLite
+      - ./src/elm/db.sqlite3:/app/src/elm/db.sqlite3
+    # 用 runserver 热重载
+    command: ["python", "manage.py", "runserver", "0.0.0.0:8000"]
+    depends_on: {}
+    healthcheck:
+      disable: true
+
+  # 开发时前端直接本地启动，不走 Docker
+  customer:
+    profiles: ["production"]
+
+  merchant:
+    profiles: ["production"]
+
+  rider:
+    profiles: ["production"]
+
+  manager:
+    profiles: ["production"]
