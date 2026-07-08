@@ -4,14 +4,14 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-ELM (饿了么 clone) is a multi-role food delivery platform: four independent React frontends (Customer, Rider, Merchant, Manager) and a Django REST backend. Customer, Merchant, and Rider are now wired to real backend APIs; Manager still uses mock data.
+ELM (饿了么 clone) is a multi-role food delivery platform: four independent React frontends (Customer, Rider, Merchant, Manager) and a Django REST backend. All four frontends are now wired to real backend APIs.
 
 | App | Directory | Stack | Backend-connected? |
 |-----|-----------|-------|---------------------|
-| Customer | `fronted/Customer/` | React 19 + TS + Vite + Tailwind v4 | Yes, via `src/api/config.ts` (axios, base URL `http://localhost:8000/api/v1`). One lingering `store.ts` import remains in `components/BottomNav.tsx` — not fully migrated despite docs claiming 100% |
-| Rider | `fronted/Rider/` | React 19 + TS + Vite + Tailwind v4 | **Yes** — available/mine orders, grab/pickup/deliver, profile all wire to backend; StatisticsTab (earnings trend) remains mock-only (no backend analytics model) |
+| Customer | `fronted/Customer/` | React 19 + TS + Vite + Tailwind v4 | Yes, via `src/api/config.ts` (axios, base URL `http://localhost:8000/api/v1`). One lingering `store.ts` import remains in `components/BottomNav.tsx` |
+| Rider | `fronted/Rider/` | React 19 + TS + Vite + Tailwind v4 | **Yes** — available/mine orders, grab/pickup/deliver, profile/status wire to backend; StatisticsTab (earnings trend) remains mock-only (no backend analytics model) |
 | Merchant | `fronted/Merchant/` | React 19 + TS + Vite + Tailwind v4 | **Yes** — orders/products/reviews/settings wire to backend; campaigns/analytics tabs remain mock-only (no backend model) |
-| Manager | `fronted/Manager/` | React 19 + TS + Vite + Tailwind v4 | No — mock `store.ts` only |
+| Manager | `fronted/Manager/` | React 19 + TS + Vite + Tailwind v4 | **Yes** — dashboard stats and user list/ban/unban wire to backend; AuditTab (merchant applications), FinanceTab (settlements), BannersTab remain mock-only (no backend models) |
 | Backend | `src/elm/` | Django 6.0 + DRF + Channels | 10 of 13 apps wired at `/api/v1/` |
 
 **Documentation**: `docs/需求分析.txt` (requirements, Chinese), `docs/00-overview.md` through `docs/05-module-design.md` (architecture/DB/API/RBAC/order-lifecycle design docs), `docs/DEVELOPMENT.md`, `docs/TESTING.md`. `docs/问题.txt` is a known-issues audit (Chinese). `BUG_REPORT.md` / `FIXED_REPORT.md` at repo root track a prior security pass — treat "完全清理"/100%-fixed claims in these as aspirational, not verified (see Customer's leftover `store.ts` import above).
@@ -105,9 +105,9 @@ AppName/
     ├── main.tsx          ← createRoot + render
     ├── index.css         ← @import "tailwindcss"
     ├── App.tsx           ← inline header + tab navigation + <Toast/>
-    ├── store.ts           ← mock data + subscribe/notify pattern (Manager only now — Customer/Merchant/Rider have all migrated off this)
-    ├── api/                ← Customer/Merchant/Rider: api/config.ts holds the axios instance and API_BASE_URL, api/index.ts has domain API modules
-    ├── contexts/AuthContext.tsx  ← Customer/Merchant/Rider: JWT login/logout, role-checked on login
+    ├── store.ts           ← deleted — no app uses store.ts anymore (all migrated to real API)
+    ├── api/                ← all 4 apps: api/config.ts (axios instance + auth interceptors), api/index.ts (domain API modules)
+    ├── contexts/AuthContext.tsx  ← all 4 apps: JWT login/logout, role-checked on login (customer/merchant/rider/admin)
     └── components/         ← one file per tab/route
 ```
 
@@ -150,6 +150,6 @@ Non-obvious gaps worth knowing before touching related code (full audit in `docs
 
 **Merchant app**: CampaignsPage and DataTab remain mock-only (no backend Campaign or analytics models); notification bell and account settings are toast-only placeholders.
 
-**Manager app**: "更多操作" button and license image viewers have no `onClick`; product-audit and report-handling tabs return empty lists (only the merchant-audit tab is functional).
+**Manager app**: DashboardTab and UsersTab now wire to real backend (dashboard stats, user list/ban/unban). AuditTab (merchant applications with license images), FinanceTab (settlement payouts), and BannersTab remain mock-only — no backend models for these exist.
 
 **Backend**: 3 of 13 Django apps (`promotions`, `payments`, `notifications`, `common`) have no URL wiring despite having models/tests — don't assume an endpoint exists without checking `config/urls.py`. Channels uses `InMemoryChannelLayer`, not production-safe for multi-worker deployments. Order stock-restore on cancel/reject was added mid-session; earlier commits may not have it.

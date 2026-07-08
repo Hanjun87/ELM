@@ -1,12 +1,24 @@
 import { useState } from 'react';
 import { Search, FileText } from 'lucide-react';
-import { applications, MerchantApplication } from '../store';
 import { toast } from '@shared';
+
+interface MerchantApplication {
+  id: number; name: string; applicant: string; address: string;
+  licenseImg: string; foodPermitImg: string; legalPerson: string; capital: string;
+  status: 'pending' | 'approved' | 'rejected'; appliedAt: string; reviewedAt?: string;
+}
+
+const mockApplications: MerchantApplication[] = [
+  { id: 1, name: '老王家东北饺子馆', applicant: '王建国', address: '浦东新区XX路101号', licenseImg: '', foodPermitImg: '', legalPerson: '王建国', capital: '50万人民币', status: 'pending', appliedAt: '2026-07-05 14:30' },
+  { id: 2, name: '星巴克咖啡 (软件园店)', applicant: '李明', address: '浦东新区YY路202号', licenseImg: '', foodPermitImg: '', legalPerson: '李明', capital: '200万人民币', status: 'pending', appliedAt: '2026-07-05 15:45' },
+  { id: 3, name: '幸福烘焙坊', applicant: '赵芳', address: '浦东新区ZZ路303号', licenseImg: '', foodPermitImg: '', legalPerson: '赵芳', capital: '30万人民币', status: 'pending', appliedAt: '2026-07-04 10:00' },
+  { id: 4, name: '兰州拉面馆', applicant: '马强', address: '浦东新区AA路88号', licenseImg: '', foodPermitImg: '', legalPerson: '马强', capital: '20万人民币', status: 'approved', appliedAt: '2026-07-03 09:00', reviewedAt: '2026-07-04' },
+];
 
 export default function AuditTab() {
   const [activeTab, setActiveTab] = useState('merchant');
   const [search, setSearch] = useState('');
-  const [apps, setApps] = useState(applications);
+  const [apps, setApps] = useState<MerchantApplication[]>(mockApplications);
 
   const filtered = apps.filter(a => {
     if (activeTab === 'merchant') return true;

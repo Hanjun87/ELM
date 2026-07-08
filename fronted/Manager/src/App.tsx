@@ -1,14 +1,29 @@
 import { useState } from 'react';
-import { LayoutDashboard, Users, FileCheck, DollarSign, Image, Bell } from 'lucide-react';
+import { LayoutDashboard, Users, FileCheck, DollarSign, Image, Bell, LogOut } from 'lucide-react';
+import { AuthProvider, useAuth } from './contexts/AuthContext';
+import Login from './components/Login';
 import DashboardTab from './components/DashboardTab';
 import UsersTab from './components/UsersTab';
 import AuditTab from './components/AuditTab';
 import FinanceTab from './components/FinanceTab';
 import BannersTab from './components/BannersTab';
-import { Toast } from '@shared';
+import { Toast, showModal } from '@shared';
 
-export default function App() {
+function MainApp() {
+  const { isAuthenticated, loading, logout } = useAuth();
   const [activeTab, setActiveTab] = useState('dashboard');
+
+  if (loading) {
+    return <div className="min-h-screen flex items-center justify-center text-gray-400">加载中...</div>;
+  }
+
+  if (!isAuthenticated) {
+    return <Login onSuccess={() => window.location.reload()} />;
+  }
+
+  const handleLogout = () => {
+    showModal('退出登录', '确认退出管理后台？', <p className="text-[13px] text-gray-500">退出后需要重新登录。</p>, logout);
+  };
 
   const tabs = [
     { id: 'dashboard', label: '大盘', icon: LayoutDashboard },
@@ -26,7 +41,9 @@ export default function App() {
           <div className="w-8 h-8 rounded-full bg-blue-50 border border-blue-100 flex items-center justify-center text-[#0085FF] font-bold text-sm">管</div>
           <span className="font-bold text-[18px] text-[#0085FF] tracking-tight">平台管理中心</span>
         </div>
-        <button className="text-[#0085FF] active:scale-95 transition-transform p-1"><Bell size={22} strokeWidth={2.5} /></button>
+        <button onClick={handleLogout} className="text-gray-400 active:scale-95 transition-transform p-1">
+          <LogOut size={20} />
+        </button>
       </header>
       <main className="flex-1 mt-14 pb-28 overflow-y-auto">
         {activeTab === 'dashboard' && <DashboardTab />}
@@ -49,5 +66,13 @@ export default function App() {
         })}
       </nav>
     </div>
+  );
+}
+
+export default function App() {
+  return (
+    <AuthProvider>
+      <MainApp />
+    </AuthProvider>
   );
 }

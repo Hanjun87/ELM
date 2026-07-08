@@ -1,11 +1,29 @@
 import { useState } from 'react';
 import { Wallet, TrendingUp } from 'lucide-react';
-import { settlements, platformConfig, Settlement } from '../store';
 import { toast } from '@shared';
 
+interface Settlement {
+  id: number; merchantName: string; period: string; orders: number;
+  revenue: string; commission: string; net: string; status: 'pending' | 'paid';
+}
+
+const mockSettlements: Settlement[] = [
+  { id: 1, merchantName: '美味坊餐饮', period: '2026-06-24 ~ 2026-06-30', orders: 412, revenue: '16,890.00', commission: '1,689.00', net: '15,201.00', status: 'pending' },
+  { id: 2, merchantName: '茶百道餐饮', period: '2026-06-24 ~ 2026-06-30', orders: 298, revenue: '8,940.00', commission: '894.00', net: '8,046.00', status: 'pending' },
+  { id: 3, merchantName: '老张火锅店', period: '2026-06-17 ~ 2026-06-23', orders: 320, revenue: '12,800.00', commission: '1,280.00', net: '11,520.00', status: 'paid' },
+  { id: 4, merchantName: '美味坊餐饮', period: '2026-06-17 ~ 2026-06-23', orders: 398, revenue: '15,420.00', commission: '1,542.00', net: '13,878.00', status: 'paid' },
+];
+
+const mockPlatformConfig = {
+  commissionRate: 10,
+  minWithdraw: 100,
+  deliveryTimeout: 30,
+  autoConfirmDays: 7,
+};
+
 export default function FinanceTab() {
-  const [config, setConfig] = useState(platformConfig);
-  const [settlementList, setSettlementList] = useState(settlements);
+  const [config, setConfig] = useState(mockPlatformConfig);
+  const [settlementList, setSettlementList] = useState<Settlement[]>(mockSettlements);
   const [activeTab, setActiveTab] = useState('settlements');
 
   const paySettlement = (id: number) => {
