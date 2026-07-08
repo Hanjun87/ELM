@@ -4,12 +4,12 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-ELM (饿了么 clone) is a multi-role food delivery platform: four independent React frontends (Customer, Rider, Merchant, Manager) and a Django REST backend. Customer and Merchant are now wired to real backend APIs; Rider and Manager still use mock data.
+ELM (饿了么 clone) is a multi-role food delivery platform: four independent React frontends (Customer, Rider, Merchant, Manager) and a Django REST backend. Customer, Merchant, and Rider are now wired to real backend APIs; Manager still uses mock data.
 
 | App | Directory | Stack | Backend-connected? |
 |-----|-----------|-------|---------------------|
 | Customer | `fronted/Customer/` | React 19 + TS + Vite + Tailwind v4 | Yes, via `src/api/config.ts` (axios, base URL `http://localhost:8000/api/v1`). One lingering `store.ts` import remains in `components/BottomNav.tsx` — not fully migrated despite docs claiming 100% |
-| Rider | `fronted/Rider/` | React 19 + TS + Vite + Tailwind v4 | No — mock `store.ts` only |
+| Rider | `fronted/Rider/` | React 19 + TS + Vite + Tailwind v4 | **Yes** — available/mine orders, grab/pickup/deliver, profile all wire to backend; StatisticsTab (earnings trend) remains mock-only (no backend analytics model) |
 | Merchant | `fronted/Merchant/` | React 19 + TS + Vite + Tailwind v4 | **Yes** — orders/products/reviews/settings wire to backend; campaigns/analytics tabs remain mock-only (no backend model) |
 | Manager | `fronted/Manager/` | React 19 + TS + Vite + Tailwind v4 | No — mock `store.ts` only |
 | Backend | `src/elm/` | Django 6.0 + DRF + Channels | 10 of 13 apps wired at `/api/v1/` |
@@ -105,8 +105,9 @@ AppName/
     ├── main.tsx          ← createRoot + render
     ├── index.css         ← @import "tailwindcss"
     ├── App.tsx           ← inline header + tab navigation + <Toast/>
-    ├── store.ts           ← mock data + subscribe/notify pattern (Rider/Merchant/Manager only — Customer is migrating off this)
-    ├── api/                ← Customer only: api/config.ts holds the axios instance and API_BASE_URL
+    ├── store.ts           ← mock data + subscribe/notify pattern (Manager only now — Customer/Merchant/Rider have all migrated off this)
+    ├── api/                ← Customer/Merchant/Rider: api/config.ts holds the axios instance and API_BASE_URL, api/index.ts has domain API modules
+    ├── contexts/AuthContext.tsx  ← Customer/Merchant/Rider: JWT login/logout, role-checked on login
     └── components/         ← one file per tab/route
 ```
 
@@ -143,7 +144,7 @@ Customer is mid-migration from this same pattern to real API calls (`src/api/con
 
 Non-obvious gaps worth knowing before touching related code (full audit in `docs/问题.txt`):
 
-**Rider app**: MineTab buttons (edit profile, settings, logout) have no `onClick`; TasksTab's "待取货"/"已完成" sub-tabs render blank (only "进行中" works); exception reporting deletes orders instead of marking them problematic.
+**Rider app**: now wired to real orders (available/mine/grab/pickup/deliver) and profile; logout works via AuthContext. Edit profile, settings menu items, and exception-report submission remain toast-only placeholders (no backend endpoint for these). StatisticsTab (earnings/trend) stays mock — no backend analytics model.
 
 **Customer app**: Settings/Profile menu items are non-functional; Home search bar is `readOnly`; order review submit isn't wired; cart checkboxes are decorative (`onClick={() => {}}`); favorites list is hardcoded.
 
