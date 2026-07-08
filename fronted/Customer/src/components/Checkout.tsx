@@ -11,7 +11,7 @@ export default function Checkout({ onBack }: { onBack: () => void }) {
     try {
       const response: any = await orderAPI.create({
         merchant_id: 1,
-        items: [{ name: '测试商品', price: 28, quantity: 1 }],
+        items: [{ product_id: 1, quantity: 1 }],
         address_snapshot: { name: '测试', phone: '138****', address: '测试地址' }
       });
       

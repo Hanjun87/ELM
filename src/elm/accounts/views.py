@@ -71,15 +71,19 @@ def register(request):
     
     if User.objects.filter(phone=phone).exists():
         return Response({'code': 2001, 'message': '手机号已注册', 'data': None}, status=400)
-    
+
+    from .models import Role, UserRole
+    try:
+        role = Role.objects.get(name=role_name)
+    except Role.DoesNotExist:
+        return Response({'code': 9001, 'message': '角色不存在', 'data': None}, status=400)
+
     # 创建用户
     user = User.objects.create(phone=phone)
     user.set_password(password)
     user.save()
-    
+
     # 分配角色
-    from .models import Role, UserRole
-    role = Role.objects.get(name=role_name)
     UserRole.objects.create(user=user, role=role)
     
     # 生成 Token

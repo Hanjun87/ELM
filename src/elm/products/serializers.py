@@ -10,8 +10,22 @@ class CategorySerializer(serializers.ModelSerializer):
 
 class ProductSerializer(serializers.ModelSerializer):
     category = CategorySerializer(read_only=True)
-    
+
     class Meta:
         model = Product
-        fields = ['id', 'name', 'description', 'image', 'price', 'original_price', 
+        fields = ['id', 'name', 'description', 'image', 'price', 'original_price',
                   'stock', 'status', 'sales_count', 'rating', 'specs', 'category']
+
+
+class MerchantProductSerializer(serializers.ModelSerializer):
+    """商家端商品创建/更新，接受 category_id 而非嵌套 category"""
+    category = CategorySerializer(read_only=True)
+    category_id = serializers.PrimaryKeyRelatedField(
+        source='category', queryset=Category.objects.all(), write_only=True, required=False, allow_null=True
+    )
+
+    class Meta:
+        model = Product
+        fields = ['id', 'name', 'description', 'image', 'price', 'original_price',
+                  'stock', 'status', 'sales_count', 'rating', 'specs', 'category', 'category_id']
+        read_only_fields = ['sales_count', 'rating']

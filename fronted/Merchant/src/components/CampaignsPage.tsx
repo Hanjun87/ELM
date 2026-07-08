@@ -1,10 +1,21 @@
 import { useState } from 'react';
-import { campaigns, Campaign } from '../store';
 import { showModal, toast } from '@shared';
 
+interface Campaign {
+  id: number; name: string; type: string; typeLabel: string; rules: string;
+  start: string; end: string; status: string; scope: string;
+}
+
+const mockCampaigns: Campaign[] = [
+  { id:1, name:"满30减5", type:"full_reduction", typeLabel:"满减", rules:"订单满30元减5元，不限品类", start:"2026-07-01", end:"2026-07-31", status:"active", scope:"全部商品" },
+  { id:2, name:"新客立减10元", type:"new_customer", typeLabel:"新客立减", rules:"首次下单立减10元，需订单满15元", start:"2026-07-01", end:"2026-12-31", status:"active", scope:"全部商品" },
+  { id:3, name:"招牌牛肉面8折", type:"discount", typeLabel:"折扣", rules:"招牌红烧牛肉面限时8折，每人限购2份", start:"2026-07-05", end:"2026-07-15", status:"active", scope:"招牌红烧牛肉面" },
+  { id:4, name:"满50减12", type:"full_reduction", typeLabel:"满减", rules:"订单满50元减12元，仅限正价商品", start:"2026-06-01", end:"2026-06-30", status:"ended", scope:"正价商品" },
+];
+
 export default function CampaignsPage() {
+  const [campaigns, setCampaigns] = useState<Campaign[]>(mockCampaigns);
   const [filter, setFilter] = useState('all');
-  const [, forceUpdate] = useState(0);
 
   const filtered = campaigns.filter(c => {
     if (filter === 'active') return c.status === 'active';
@@ -17,11 +28,9 @@ export default function CampaignsPage() {
   const statusLabels: Record<string, string> = { active: '进行中', ended: '已结束', upcoming: '未开始' };
 
   const toggleCampaign = (id: number) => {
+    setCampaigns(prev => prev.map(c => c.id === id ? { ...c, status: c.status === 'active' ? 'ended' : 'active' } : c));
     const c = campaigns.find(x => x.id === id);
-    if (!c) return;
-    c.status = c.status === 'active' ? 'ended' : 'active';
-    toast(c.name + ' 已' + (c.status === 'active' ? '启用' : '停用'));
-    forceUpdate(n => n + 1);
+    if (c) toast(c.name + ' 已' + (c.status === 'active' ? '停用' : '启用'));
   };
 
   const addCampaign = () => {
@@ -50,13 +59,12 @@ export default function CampaignsPage() {
 
     const confirmAdd = () => {
       if (!form.name) { toast('请输入活动名称'); return; }
-      campaigns.push({
+      setCampaigns(prev => [...prev, {
         id: Date.now(), name: form.name, type: form.type, typeLabel: typeLabels[form.type] || form.type,
         rules: form.rules || '待配置', start: form.start, end: form.end,
         status: 'upcoming', scope: form.scope || '全部商品',
-      });
+      }]);
       toast('已创建: ' + form.name);
-      forceUpdate(n => n + 1);
     };
 
     showModal('新建营销活动', '', renderBody(), confirmAdd);

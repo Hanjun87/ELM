@@ -23,7 +23,8 @@ if __name__ == "__main__":
     if len(sys.argv) > 1:
         test_labels = sys.argv[1:]
     else:
-        test_labels = ['accounts', 'merchants', 'products', 'orders', 'addresses']
+        test_labels = ['accounts', 'merchants', 'products', 'orders', 'addresses',
+                        'riders', 'reviews', 'admin_panel', 'uploads']
     
     failures = test_runner.run_tests(test_labels)
     

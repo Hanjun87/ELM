@@ -17,3 +17,6 @@ class Merchant(models.Model):
 
     class Meta:
         db_table = 'merchant'
+
+    def __str__(self):
+        return self.store_name

@@ -13,9 +13,12 @@ urlpatterns = [
     path('merchant/orders/', views.merchant_orders, name='merchant_orders'),
     path('merchant/orders/<int:pk>/accept/', views.merchant_accept_order, name='merchant_accept'),
     path('merchant/orders/<int:pk>/reject/', views.merchant_reject_order, name='merchant_reject'),
+    path('merchant/orders/<int:pk>/prepare/', views.merchant_prepare_order, name='merchant_prepare'),
+    path('merchant/orders/<int:pk>/ready/', views.merchant_ready_order, name='merchant_ready'),
     
     # Rider
     path('rider/orders/available/', views.rider_available_orders, name='rider_available'),
+    path('rider/orders/mine/', views.rider_my_orders, name='rider_my_orders'),
     path('rider/orders/<int:pk>/grab/', views.rider_grab_order, name='rider_grab'),
     path('rider/orders/<int:pk>/pickup/', views.rider_pickup_order, name='rider_pickup'),
     path('rider/orders/<int:pk>/deliver/', views.rider_deliver_order, name='rider_deliver'),

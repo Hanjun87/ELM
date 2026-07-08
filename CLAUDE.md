@@ -4,84 +4,86 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-ELM is a multi-role food delivery platform in early prototype stage. Four independent frontend React apps with varying completeness levels; Django backend is configured but not scaffolded yet.
+ELM (饿了么 clone) is a multi-role food delivery platform: four independent React frontends (Customer, Rider, Merchant, Manager) and a Django REST backend. Customer and Merchant are now wired to real backend APIs; Rider and Manager still use mock data.
 
-| App | Directory | Stack | Components | Status |
-|-----|-----------|-------|------------|--------|
-| Customer | `fronted/Customer/` | React 19 + TS + Vite + Tailwind v4 | 16 | Most complete; many UI flows present but unimplemented |
-| Rider | `fronted/Rider/` | React 19 + TS + Vite + Tailwind v4 | 3 | Skeleton only; many dead buttons and empty routes |
-| Merchant | `fronted/Merchant/` | React 19 + TS + Vite + Tailwind v4 | 7 | Core flows present; missing inventory management |
-| Manager | `fronted/Manager/` | React 19 + TS + Vite + Tailwind v4 | 5 | Basic admin UI; audit tabs partially implemented |
-| Backend | `src/elm/` | Django 6.0 + DRF | — | Dependencies configured; no models/views/migrations yet |
+| App | Directory | Stack | Backend-connected? |
+|-----|-----------|-------|---------------------|
+| Customer | `fronted/Customer/` | React 19 + TS + Vite + Tailwind v4 | Yes, via `src/api/config.ts` (axios, base URL `http://localhost:8000/api/v1`). One lingering `store.ts` import remains in `components/BottomNav.tsx` — not fully migrated despite docs claiming 100% |
+| Rider | `fronted/Rider/` | React 19 + TS + Vite + Tailwind v4 | No — mock `store.ts` only |
+| Merchant | `fronted/Merchant/` | React 19 + TS + Vite + Tailwind v4 | **Yes** — orders/products/reviews/settings wire to backend; campaigns/analytics tabs remain mock-only (no backend model) |
+| Manager | `fronted/Manager/` | React 19 + TS + Vite + Tailwind v4 | No — mock `store.ts` only |
+| Backend | `src/elm/` | Django 6.0 + DRF + Channels | 10 of 13 apps wired at `/api/v1/` |
 
-**Documentation**: `docs/需求分析.txt` contains full requirements (in Chinese). Former API design docs (01-06) staged for deletion.
+**Documentation**: `docs/需求分析.txt` (requirements, Chinese), `docs/00-overview.md` through `docs/05-module-design.md` (architecture/DB/API/RBAC/order-lifecycle design docs), `docs/DEVELOPMENT.md`, `docs/TESTING.md`. `docs/问题.txt` is a known-issues audit (Chinese). `BUG_REPORT.md` / `FIXED_REPORT.md` at repo root track a prior security pass — treat "完全清理"/100%-fixed claims in these as aspirational, not verified (see Customer's leftover `store.ts` import above).
 
 ## Commands
 
+### Frontend (each app is independent — install per-directory)
+
 ```bash
-# Each frontend app is independent; install deps in each directory first:
 cd fronted/Customer && npm install && npm run dev     # port 3000
 cd fronted/Rider   && npm install && npm run dev      # port 3000
 cd fronted/Merchant && npm install && npm run dev     # port 3000
 cd fronted/Manager && npm install && npm run dev      # port 3000
 
-# Type-check (from app directory):
-npm run lint    # runs tsc --noEmit
-
-# Backend (when implemented):
-uv sync && uv run manage.py migrate
-uv run daphne config.asgi:application --port 8000
+npm run lint    # tsc --noEmit, run from inside an app directory
+npm run build   # vite build
 ```
 
-## Known Issues & Incomplete Work
+### Backend
 
-The frontends are at varying completion stages. Many UI elements are non-functional:
+```bash
+cd src/elm
+uv sync
+uv run python manage.py migrate
+uv run python manage.py runserver          # dev server
+uv run daphne config.asgi:application --port 8000   # ASGI (needed for Channels/websockets)
 
-**Rider app (most incomplete)**:
-- Only 3 components vs Customer's 16; many skeleton screens
-- MineTab: all buttons (edit profile, settings, logout) have no `onClick`
-- TasksTab: "待取货" and "已完成" sub-tabs render blank (only "进行中" works)
-- Exception reporting deletes orders instead of marking them as problematic
+uv run python manage.py test                         # all tests, Django test runner (not pytest)
+uv run python manage.py test accounts                # single app
+uv run python runtests.py                             # wrapper; defaults to accounts, merchants, products, orders, addresses (excludes promotions — update runtests.py if you add tests there)
+uv run python manage.py init_data                     # seed roles + 4 test users + sample merchant/products/order
+uv run python manage.py add_more_data                 # seed additional demo data
 
-**Customer app**:
-- Settings/Profile pages: all menu items (personal info, account security, payment, address management, logout) non-functional
-- Search bar in Home is `readOnly`; search button doesn't trigger search
-- Order review submit button not wired up
-- Cart checkboxes are decorative only (`onClick={() => {}}`)
-- Favorites list is hardcoded; unfavorite action doesn't work
+# Coverage
+uv add coverage && uv run coverage run --source='.' manage.py test && uv run coverage report
+```
 
-**Merchant app**:
-- No way to manually delist products or edit inventory after initial stock-out
-- Top notification bell, account settings, discount campaigns: show toast placeholder, no real logic
-- Accept/reject/fulfill logic duplicated between DashboardTab and OrdersTab
+**Test accounts** (seeded by `init_data`, phone/password): `13800001000/customer`, `13800002000/merchant`, `13800003000/rider`, `13800004000/manager` (manager account gets the `admin` role).
 
-**Manager app**:
-- "更多操作" button on users, license image viewers: no `onClick`
-- Product audit and report handling tabs show empty lists when clicked (only merchant audit tab works)
-
-**Cross-app**:
-- Design tokens (`#0085FF`, etc.) hardcoded in components instead of CSS variables
-- Shared `Header.tsx` component exists but unused (see Migration section above)
-
-See `docs/问题.txt` for the full audit (in Chinese).
+**Production settings**: `DJANGO_SETTINGS_MODULE=config.settings_prod` switches SQLite → Postgres (via `DB_NAME`/`DB_USER`/`DB_PASSWORD`/`DB_HOST`/`DB_PORT` env vars) and adds file+console logging. `.env.example` at repo root lists the expected vars (`SECRET_KEY`, `DEBUG`, `ALLOWED_HOSTS`, `CORS_ALLOW_ALL`, DB vars).
 
 ## Architecture
 
-### Shared Module (`fronted/shared/`)
+### Backend (`src/elm/`)
 
-All four apps import from `@shared` via Vite `resolve.alias`. Contains:
+Django project root is `config/` (not `elm/`) — `manage.py`, `config/settings.py`, `config/urls.py`, `config/asgi.py`/`wsgi.py`.
 
-- `Toast.tsx` — `<Toast />` component + `toast(msg)` function
-- `Modal.tsx` — `<Modal />` component + `showModal(title, desc, body, onConfirm)` / `closeModal()`
-- `Header.tsx` — **Implemented but unused**: Fixed top header component ready for adoption (see Migration below)
-- `types.ts` — shared TypeScript interfaces (`Order`, `Product`, `TabConfig`)
+**Auth**: custom user model `accounts.User(AbstractUser)` with `username=None` — login is by `phone` (`USERNAME_FIELD`), not username or email. JWT via `djangorestframework-simplejwt`; `login`/`register`/`me` are function-based `@api_view` views in `accounts/views.py`. RBAC is DB-driven: `Role` (with a `permissions` JSONField list of permission-code strings) and `UserRole` join table, checked via `User.has_role()` / `get_roles()`. See `docs/03-rbac-design.md` for the 4 fixed roles (customer/merchant/rider/admin) and their permission codes and data-isolation rules — merchant and rider roles are not meant to coexist on one account.
+
+**Wired apps** (mounted in `config/urls.py` under `/api/v1/`): 10 of 13 apps are wired — `accounts`, `merchants`, `products`, `orders`, `addresses`, `reviews`, `riders`, `admin_panel`, `uploads`, `sessions` (websocket). `orders/urls.py` splits into customer/merchant/rider sub-routes; `merchants/urls.py` has public + merchant-only sections; `products/urls.py` has public list + merchant CRUD; `reviews/urls.py` has public list + merchant reply.
+
+**Unwired apps** (models/tests exist but no URL wiring): `promotions`, `payments`, `notifications`, `common`. Don't assume these have working HTTP endpoints.
+
+**Order lifecycle**: `docs/04-order-lifecycle.md` defines 11 status values (`pending, paid, accepted, preparing, ready, picked, delivered, finished, cancelled, refunding, refunded`). All merchant transitions (`paid→accepted→preparing→ready`) and rider transitions (`ready→picked→delivered`) are now implemented; refund flow remains unimplemented.
+
+**Channels**: `ASGI_APPLICATION` is configured and `CHANNEL_LAYERS` uses `InMemoryChannelLayer` — no Redis-backed layer yet, so websocket state won't survive a process restart or work across multiple workers.
+
+**CORS**: `CORS_ALLOW_ALL_ORIGINS` defaults to `True` in dev via env var — fine for local work, must be tightened before any shared/production deployment.
+
+### Frontend
+
+#### Shared Module (`fronted/shared/`)
+
+All four apps import from `@shared` via Vite `resolve.alias` (see any app's `vite.config.ts`) and a matching `tsconfig.json` `paths` entry:
+
+- `Toast.tsx` — `<Toast />` + `toast(msg)`
+- `Modal.tsx` — `<Modal />` + `showModal(title, desc, body, onConfirm)` / `closeModal()`
+- `Header.tsx` — exported from `@shared` but **not adopted anywhere**: all four `App.tsx` files still render their own inline `<header>` markup instead of `<Header title="..." onBack={...} />`
+- `types.ts` — shared interfaces (`Order`, `Product`, `TabConfig`)
 - `index.ts` — barrel export
 
-Each app's `vite.config.ts` maps `@shared` → `../shared/` and each `tsconfig.json` has the corresponding `paths` entry.
-
-**Migration in progress**: `Header.tsx` exists and is exported from `@shared`, but all four apps still use their own inline header implementations. To adopt the shared header, replace the `<header>` element in each `App.tsx` with `<Header title="..." onBack={...} />` from `@shared`.
-
-### Design System (`fronted/DESIGN.md`)
+#### Design System (`fronted/DESIGN.md`)
 
 | Token | Value | Usage |
 |-------|-------|-------|
@@ -92,7 +94,9 @@ Each app's `vite.config.ts` maps `@shared` → `../shared/` and each `tsconfig.j
 | Cards | `rounded-[16px] shadow-[0_4px_12px_rgba(0,0,0,0.03)]` | White cards |
 | Bottom nav | `rounded-t-[20px] shadow-[0_-8px_24px_rgba(0,0,0,0.04)]` | Fixed bottom |
 
-### App Structure (all four follow this pattern)
+Design tokens are hardcoded as hex values throughout components rather than pulled from CSS variables — when touching styled components, match the existing hardcoded-hex pattern rather than introducing a token system unprompted.
+
+#### App structure (all four follow this pattern)
 
 ```
 AppName/
@@ -100,14 +104,17 @@ AppName/
 └── src/
     ├── main.tsx          ← createRoot + render
     ├── index.css         ← @import "tailwindcss"
-    ├── App.tsx           ← Header + Tab navigation + <Toast/>
-    ├── store.ts          ← Mock data + subscribe/notify pattern
-    └── components/       ← One file per tab/route
+    ├── App.tsx           ← inline header + tab navigation + <Toast/>
+    ├── store.ts           ← mock data + subscribe/notify pattern (Rider/Merchant/Manager only — Customer is migrating off this)
+    ├── api/                ← Customer only: api/config.ts holds the axios instance and API_BASE_URL
+    └── components/         ← one file per tab/route
 ```
 
-### State Management
+Vite dev server config sets `HMR`/file-watching off when `DISABLE_HMR=true` is set in the environment — this is intentional (avoids flicker from concurrent agent edits), not a bug.
 
-Each app uses a simple **reactive store** (not Redux). The pattern:
+#### State management
+
+Rider, Merchant, and Manager use a plain reactive store, not Redux:
 
 ```ts
 // store.ts
@@ -121,24 +128,27 @@ const [, forceUpdate] = useState(0);
 useEffect(() => subscribe(() => forceUpdate(n => n + 1)), []);
 ```
 
-Customer's store is more elaborate with `addToCart()`, `placeOrder()`, etc. The other three use simpler direct-mutation + `forceUpdate` patterns.
+Customer is mid-migration from this same pattern to real API calls (`src/api/config.ts`) — most components now call the backend, but `components/BottomNav.tsx` still imports `getCartCount`/`subscribe`/`StoreState` from `store.ts`.
 
 ### Key Conventions
 
-- **Icons**: `lucide-react` everywhere (no emoji in UI messages)
-- **Modals**: never use browser `prompt()`/`alert()` — use `showModal()` from `@shared`
-- **Notifications**: use `toast()` from `@shared` — never `alert()`
-- **Colors**: always use the design system hex values from `DESIGN.md`, not Tailwind color names like `blue-500`
+- **Icons**: `lucide-react` everywhere, no emoji in UI messages
+- **Modals**: never browser `prompt()`/`alert()` — use `showModal()` from `@shared`
+- **Notifications**: `toast()` from `@shared`, never `alert()`
+- **Colors**: use the hex values from `DESIGN.md`, not Tailwind color names like `blue-500`
 - **Tab indices**: Customer/Manager use string tab IDs, Merchant uses numeric indices
-- **Sub-page routing**: Apps use a `currentRoute` state pattern (not React Router) — set a route string, conditionally render the matching component
+- **Sub-page routing**: a `currentRoute` state string, conditionally rendered — no React Router
 
-### Backend API
+## Known Issues & Incomplete Work
 
-Backend is configured but not implemented yet. Django 6.0 dependencies are in `pyproject.toml`, but `src/elm/` contains only an empty `__init__.py`. No models, views, migrations, or URL routing exists yet.
+Non-obvious gaps worth knowing before touching related code (full audit in `docs/问题.txt`):
 
-When mapping frontend to backend (future work):
-- Customer `store.ts` Cart → `POST /api/v1/cart/items/`, Orders → `GET/POST /api/v1/orders/`
-- Merchant order actions → `PATCH /api/v1/merchant/orders/{id}/accept/` etc.
-- Rider flow → `PATCH /api/v1/rider/orders/{id}/pickup/`, `/deliver/`
+**Rider app**: MineTab buttons (edit profile, settings, logout) have no `onClick`; TasksTab's "待取货"/"已完成" sub-tabs render blank (only "进行中" works); exception reporting deletes orders instead of marking them problematic.
 
-See `docs/需求分析.txt` for complete database schema and role requirements.
+**Customer app**: Settings/Profile menu items are non-functional; Home search bar is `readOnly`; order review submit isn't wired; cart checkboxes are decorative (`onClick={() => {}}`); favorites list is hardcoded.
+
+**Merchant app**: CampaignsPage and DataTab remain mock-only (no backend Campaign or analytics models); notification bell and account settings are toast-only placeholders.
+
+**Manager app**: "更多操作" button and license image viewers have no `onClick`; product-audit and report-handling tabs return empty lists (only the merchant-audit tab is functional).
+
+**Backend**: 3 of 13 Django apps (`promotions`, `payments`, `notifications`, `common`) have no URL wiring despite having models/tests — don't assume an endpoint exists without checking `config/urls.py`. Channels uses `InMemoryChannelLayer`, not production-safe for multi-worker deployments. Order stock-restore on cancel/reject was added mid-session; earlier commits may not have it.

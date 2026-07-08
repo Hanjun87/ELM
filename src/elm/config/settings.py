@@ -7,9 +7,16 @@ import os
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 # 安全配置 - 从环境变量读取
-SECRET_KEY = os.environ.get('SECRET_KEY', "django-insecure-pvk()g-1d&eymj@^-)q_^7w_j!x4ls2p^4d!j-cjzft+ay3i==")
+_INSECURE_DEFAULT_SECRET_KEY = "django-insecure-pvk()g-1d&eymj@^-)q_^7w_j!x4ls2p^4d!j-cjzft+ay3i=="
+SECRET_KEY = os.environ.get('SECRET_KEY', _INSECURE_DEFAULT_SECRET_KEY)
 DEBUG = os.environ.get('DEBUG', 'True') == 'True'
 ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', 'localhost,127.0.0.1').split(',')
+
+if not DEBUG and SECRET_KEY == _INSECURE_DEFAULT_SECRET_KEY:
+    from django.core.exceptions import ImproperlyConfigured
+    raise ImproperlyConfigured(
+        'SECRET_KEY environment variable must be set when DEBUG=False'
+    )
 
 # Application definition
 INSTALLED_APPS = [
@@ -95,6 +102,10 @@ USE_TZ = True
 # Static files
 STATIC_URL = "static/"
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+
+# Media files (用户上传)
+MEDIA_URL = "media/"
+MEDIA_ROOT = BASE_DIR / "media"
 
 # Custom User Model
 AUTH_USER_MODEL = "accounts.User"

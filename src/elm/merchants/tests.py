@@ -48,9 +48,40 @@ class MerchantAPITestCase(TestCase):
     def test_get_nonexistent_merchant(self):
         """测试获取不存在的商家"""
         response = self.client.get('/api/v1/merchants/9999/')
-        
+
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
         self.assertEqual(response.data['code'], 3001)
+
+    def test_get_my_store(self):
+        """测试获取我的店铺信息"""
+        self.client.force_authenticate(user=self.merchant.user)
+        response = self.client.get('/api/v1/merchant/store/')
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data['data']['store_name'], '测试餐厅')
+
+    def test_update_my_store(self):
+        """测试更新我的店铺信息"""
+        self.client.force_authenticate(user=self.merchant.user)
+        response = self.client.patch('/api/v1/merchant/store/', {'store_name': '新店名'}, format='json')
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.merchant.refresh_from_db()
+        self.assertEqual(self.merchant.store_name, '新店名')
+
+    def test_toggle_store(self):
+        """测试开关店"""
+        self.client.force_authenticate(user=self.merchant.user)
+        response = self.client.post('/api/v1/merchant/store/toggle/', {'status': 'closed'}, format='json')
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.merchant.refresh_from_db()
+        self.assertEqual(self.merchant.status, 'closed')
+
+    def test_my_store_requires_auth(self):
+        """测试未登录无法访问我的店铺"""
+        response = self.client.get('/api/v1/merchant/store/')
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
 
 
 class MerchantModelTestCase(TestCase):

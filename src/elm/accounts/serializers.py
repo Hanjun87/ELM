@@ -7,7 +7,7 @@ class UserSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = User
-        fields = ['id', 'phone', 'email', 'avatar', 'status', 'roles', 'created_at']
+        fields = ['id', 'phone', 'email', 'avatar', 'status', 'roles', 'date_joined']
         
     def get_roles(self, obj):
         return [ur.role.name for ur in obj.user_roles.all()]

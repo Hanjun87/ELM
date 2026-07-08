@@ -1,7 +1,10 @@
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.response import Response
+from django.db import models, transaction
 from django.utils import timezone
+from merchants.models import Merchant
+from products.models import Product
 from .models import Order
 from .serializers import OrderSerializer
 import random
@@ -49,43 +52,79 @@ def order_detail(request, pk):
 @permission_classes([IsAuthenticated])
 def order_create(request):
     """创建订单"""
-    from merchants.models import Merchant
-    
     merchant_id = request.data.get('merchant_id')
     items = request.data.get('items', [])
     address_snapshot = request.data.get('address_snapshot', {})
     note = request.data.get('note', '')
-    
+
     if not merchant_id or not items:
         return Response({'code': 9001, 'message': '参数错误', 'data': None}, status=400)
-    
+
     try:
         merchant = Merchant.objects.get(pk=merchant_id)
     except Merchant.DoesNotExist:
         return Response({'code': 3001, 'message': '商家不存在', 'data': None}, status=404)
-    
-    # 计算金额
-    total_amount = sum(float(item.get('price', 0)) * int(item.get('quantity', 1)) for item in items)
-    delivery_fee = float(merchant.delivery_fee)
-    paid_amount = total_amount + delivery_fee
-    
-    # 生成订单号
-    order_no = f"OD{timezone.now().strftime('%Y%m%d%H%M%S')}{random.randint(1000, 9999)}"
-    
-    # 创建订单
-    order = Order.objects.create(
-        order_no=order_no,
-        customer=request.user,
-        merchant=merchant,
-        address_snapshot=address_snapshot,
-        items_snapshot=items,
-        total_amount=total_amount,
-        delivery_fee=delivery_fee,
-        paid_amount=paid_amount,
-        status='pending',
-        note=note
-    )
-    
+
+    # 校验每个下单项，数量必须为正整数
+    quantities = {}
+    for item in items:
+        product_id = item.get('product_id')
+        quantity = item.get('quantity')
+        if not product_id or not isinstance(quantity, int) or quantity <= 0:
+            return Response({'code': 9001, 'message': '参数错误', 'data': None}, status=400)
+        quantities[product_id] = quantities.get(product_id, 0) + quantity
+
+    try:
+        with transaction.atomic():
+            # 加锁避免并发下单导致超卖
+            products = Product.objects.select_for_update().filter(
+                pk__in=quantities.keys(), merchant=merchant
+            )
+            products_by_id = {p.id: p for p in products}
+
+            if len(products_by_id) != len(quantities):
+                return Response({'code': 3002, 'message': '商品不存在', 'data': None}, status=404)
+
+            items_snapshot = []
+            total_amount = 0
+            for product_id, quantity in quantities.items():
+                product = products_by_id[product_id]
+                if product.status != 'on':
+                    return Response({'code': 3003, 'message': f'{product.name} 已下架', 'data': None}, status=400)
+                if product.stock < quantity:
+                    return Response({'code': 3004, 'message': f'{product.name} 库存不足', 'data': None}, status=400)
+
+                product.stock -= quantity
+                product.sales_count += quantity
+                product.save(update_fields=['stock', 'sales_count'])
+
+                total_amount += float(product.price) * quantity
+                items_snapshot.append({
+                    'product_id': product.id,
+                    'name': product.name,
+                    'price': float(product.price),
+                    'quantity': quantity,
+                })
+
+            delivery_fee = float(merchant.delivery_fee)
+            paid_amount = total_amount + delivery_fee
+
+            order_no = f"OD{timezone.now().strftime('%Y%m%d%H%M%S')}{random.randint(1000, 9999)}"
+            order = Order.objects.create(
+                order_no=order_no,
+                customer=request.user,
+                merchant=merchant,
+                address_snapshot=address_snapshot,
+                items_snapshot=items_snapshot,
+                total_amount=total_amount,
+                delivery_fee=delivery_fee,
+                paid_amount=paid_amount,
+                status='pending',
+                note=note
+            )
+    except (TypeError, ValueError):
+        return Response({'code': 9001, 'message': '参数错误', 'data': None}, status=400)
+
     serializer = OrderSerializer(order)
     return Response({
         'code': 0,
@@ -116,11 +155,21 @@ def order_cancel(request, pk):
         order = Order.objects.get(pk=pk, customer=request.user)
         if order.status not in ['pending', 'paid']:
             return Response({'code': 4001, 'message': '订单状态不允许取消', 'data': None}, status=400)
-        order.status = 'cancelled'
-        order.save()
+        with transaction.atomic():
+            order.status = 'cancelled'
+            order.save()
+            _restore_stock(order)
         return Response({'code': 0, 'message': '取消成功', 'data': None})
     except Order.DoesNotExist:
         return Response({'code': 4002, 'message': '订单不存在', 'data': None}, status=404)
+
+
+def _restore_stock(order):
+    """取消/拒单时恢复商品库存"""
+    for item in order.items_snapshot:
+        Product.objects.filter(pk=item.get('product_id')).update(
+            stock=models.F('stock') + item.get('quantity', 0)
+        )
 
 
 # Merchant 端接口
@@ -130,16 +179,17 @@ def merchant_orders(request):
     """商家订单列表"""
     try:
         merchant = request.user.merchant
-        orders = Order.objects.filter(merchant=merchant).order_by('-created_at')
-        
-        status = request.query_params.get('status')
-        if status:
-            orders = orders.filter(status=status)
-        
-        serializer = OrderSerializer(orders, many=True)
-        return Response({'code': 0, 'message': 'success', 'data': {'items': serializer.data, 'total': orders.count()}})
-    except:
+    except Merchant.DoesNotExist:
         return Response({'code': 3001, 'message': '商家不存在', 'data': None}, status=404)
+
+    orders = Order.objects.filter(merchant=merchant).order_by('-created_at')
+
+    status = request.query_params.get('status')
+    if status:
+        orders = orders.filter(status=status)
+
+    serializer = OrderSerializer(orders, many=True)
+    return Response({'code': 0, 'message': 'success', 'data': {'items': serializer.data, 'total': orders.count()}})
 
 
 @api_view(['POST'])
@@ -164,11 +214,42 @@ def merchant_reject_order(request, pk):
     try:
         merchant = request.user.merchant
         order = Order.objects.get(pk=pk, merchant=merchant, status='paid')
-        order.status = 'cancelled'
-        order.save()
+        with transaction.atomic():
+            order.status = 'cancelled'
+            order.save()
+            _restore_stock(order)
         return Response({'code': 0, 'message': '已拒单', 'data': None})
     except Order.DoesNotExist:
         return Response({'code': 4002, 'message': '订单不存在', 'data': None}, status=404)
+
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def merchant_prepare_order(request, pk):
+    """商家确认出餐（accepted -> preparing）"""
+    try:
+        merchant = request.user.merchant
+        order = Order.objects.get(pk=pk, merchant=merchant, status='accepted')
+        order.status = 'preparing'
+        order.save()
+        return Response({'code': 0, 'message': '已确认出餐', 'data': OrderSerializer(order).data})
+    except Order.DoesNotExist:
+        return Response({'code': 4002, 'message': '订单不存在或状态不正确', 'data': None}, status=404)
+
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def merchant_ready_order(request, pk):
+    """商家出餐完成（preparing -> ready）"""
+    try:
+        merchant = request.user.merchant
+        order = Order.objects.get(pk=pk, merchant=merchant, status='preparing')
+        order.status = 'ready'
+        order.prepared_at = timezone.now()
+        order.save()
+        return Response({'code': 0, 'message': '出餐完成', 'data': OrderSerializer(order).data})
+    except Order.DoesNotExist:
+        return Response({'code': 4002, 'message': '订单不存在或状态不正确', 'data': None}, status=404)
 
 
 # Rider 端接口
@@ -177,6 +258,26 @@ def merchant_reject_order(request, pk):
 def rider_available_orders(request):
     """骑手可接单列表"""
     orders = Order.objects.filter(status='ready', rider__isnull=True).order_by('-created_at')
+    serializer = OrderSerializer(orders, many=True)
+    return Response({'code': 0, 'message': 'success', 'data': {'items': serializer.data, 'total': orders.count()}})
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def rider_my_orders(request):
+    """骑手我的配送单"""
+    from riders.models import Rider
+    try:
+        rider = request.user.rider
+    except Rider.DoesNotExist:
+        return Response({'code': 5001, 'message': '骑手信息不存在', 'data': None}, status=404)
+
+    orders = Order.objects.filter(rider=rider).order_by('-created_at')
+
+    status_param = request.query_params.get('status')
+    if status_param:
+        orders = orders.filter(status=status_param)
+
     serializer = OrderSerializer(orders, many=True)
     return Response({'code': 0, 'message': 'success', 'data': {'items': serializer.data, 'total': orders.count()}})
 

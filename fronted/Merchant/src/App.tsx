@@ -1,5 +1,7 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Bell, LayoutDashboard, Receipt, Package, BarChart3, Store } from 'lucide-react';
+import { AuthProvider, useAuth } from './contexts/AuthContext';
+import Login from './components/Login';
 import DashboardTab from './components/DashboardTab';
 import OrdersTab from './components/OrdersTab';
 import ProductsTab from './components/ProductsTab';
@@ -9,16 +11,25 @@ import ReviewsPage from './components/ReviewsPage';
 import CampaignsPage from './components/CampaignsPage';
 import { Modal } from '@shared';
 import { Toast } from '@shared';
-import { subscribe, notify } from './store';
 
 type SubPage = 'reviews' | 'campaigns' | null;
 
-export default function App() {
+function MainApp() {
+  const { isAuthenticated, loading } = useAuth();
   const [activeTab, setActiveTab] = useState(0);
   const [subPage, setSubPage] = useState<SubPage>(null);
-  const [, forceUpdate] = useState(0);
 
-  useEffect(() => subscribe(() => forceUpdate(n => n + 1)), []);
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-gray-400">加载中...</div>
+      </div>
+    );
+  }
+
+  if (!isAuthenticated) {
+    return <Login onSuccess={() => window.location.reload()} />;
+  }
 
   const openSubPage = (page: SubPage) => {
     setSubPage(page);
@@ -86,5 +97,13 @@ export default function App() {
       <Toast />
       <Modal />
     </div>
+  );
+}
+
+export default function App() {
+  return (
+    <AuthProvider>
+      <MainApp />
+    </AuthProvider>
   );
 }

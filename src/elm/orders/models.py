@@ -32,6 +32,7 @@ class Order(models.Model):
     created_at = models.DateTimeField('下单时间', auto_now_add=True)
     paid_at = models.DateTimeField('支付时间', null=True, blank=True)
     accepted_at = models.DateTimeField('接单时间', null=True, blank=True)
+    prepared_at = models.DateTimeField('出餐完成时间', null=True, blank=True)
     picked_at = models.DateTimeField('取餐时间', null=True, blank=True)
     delivered_at = models.DateTimeField('送达时间', null=True, blank=True)
 
