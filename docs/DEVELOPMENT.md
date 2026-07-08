@@ -2,209 +2,177 @@
 
 ## 环境要求
 
-- Python 3.13+
-- Node.js 18+
-- uv (Python 包管理)
-- npm
+| 工具 | 版本 |
+|------|------|
+| Python | 3.13+ |
+| Node.js | 18+ |
+| uv | 最新 |
+| npm | 9+ |
 
-## 初始化项目
+---
 
-### 后端初始化
+## 快速启动
+
+> **一键启动脚本**（推荐）: 项目根目录有 `start.sh`，可按需选择启动哪个前端。
+
+### 手动启动
+
+**后端**（在 `src/elm/` 目录下执行）：
 ```bash
 cd src/elm
-
-# 安装依赖
 uv sync
-
-# 初始化数据库
 uv run python manage.py migrate
-
-# 创建测试数据
-uv run python manage.py init_data
-uv run python manage.py add_more_data
-
-# 启动服务器
-uv run python manage.py runserver
+uv run python manage.py init_data        # 初始化角色 + 测试账号 + 示例数据
+uv run python manage.py add_more_data    # 追加更多演示数据（可选）
+uv run python manage.py runserver        # http://localhost:8000
 ```
 
-### 前端初始化
+**各前端**（各自独立，选择一个启动）：
 ```bash
-cd fronted/Customer
-
-# 安装依赖
-npm install
-
-# 启动开发服务器
-npm run dev
+cd fronted/Customer && npm install && npm run dev   # http://localhost:3000
+cd fronted/Merchant && npm install && npm run dev   # http://localhost:3000
+cd fronted/Rider    && npm install && npm run dev   # http://localhost:3000
+cd fronted/Manager  && npm install && npm run dev   # http://localhost:3000
 ```
 
-## API 测试
+---
+
+## 测试账号
+
+| 角色 | 手机号 | 密码 |
+|------|--------|------|
+| 客户 | 13800001000 | customer |
+| 商家 | 13800002000 | merchant |
+| 骑手 | 13800003000 | rider |
+| 管理员 | 13800004000 | manager |
+
+---
+
+## API 调试示例
 
 ### 登录
 ```bash
 curl -X POST http://localhost:8000/api/v1/auth/login/ \
   -H "Content-Type: application/json" \
-  -d '{"phone": "13800000001", "password": "customer"}'
+  -d '{"phone": "13800001000", "password": "customer"}'
 ```
 
-### 获取商家列表
+### 创建订单（获取 token 后）
 ```bash
-curl http://localhost:8000/api/v1/merchants/
-```
-
-### 创建订单（需要 token）
-```bash
+TOKEN="eyJ..."
 curl -X POST http://localhost:8000/api/v1/orders/create/ \
-  -H "Authorization: Bearer YOUR_TOKEN" \
+  -H "Authorization: Bearer $TOKEN" \
   -H "Content-Type: application/json" \
   -d '{
     "merchant_id": 1,
-    "items": [{"name": "商品", "price": 28, "quantity": 1}],
-    "address_snapshot": {"name": "张三", "phone": "138", "address": "XXX"}
+    "items": [{"product_id": 1, "quantity": 2}],
+    "address_snapshot": {"name": "张三", "phone": "13800138000", "address": "朝阳区建国门外大街1号"}
   }'
 ```
 
+---
+
 ## 常用命令
 
-### Django 管理
+### 后端
 ```bash
-# 创建迁移
-uv run python manage.py makemigrations
+cd src/elm
 
-# 执行迁移
+# 数据库迁移
+uv run python manage.py makemigrations
 uv run python manage.py migrate
 
-# 创建超级用户
-uv run python manage.py createsuperuser
+# 运行测试
+uv run python manage.py test                              # 全部（58 个用例）
+uv run python manage.py test accounts merchants products  # 指定模块
+uv run python runtests.py                                 # 脚本方式（更详细输出）
 
-# Django Shell
+# 测试覆盖率
+uv add coverage
+uv run coverage run --source='.' manage.py test
+uv run coverage report
+
+# Shell
 uv run python manage.py shell
+
+# Django 检查
+uv run python manage.py check
+uv run python manage.py check --deploy   # 生产环境安全检查
 ```
 
-### 前端开发
+### 前端
 ```bash
-# 开发服务器
-npm run dev
-
-# 构建生产版本
-npm run build
-
-# 类型检查
-npm run type-check
+npm run dev      # 开发服务器
+npm run build    # 生产构建
+npm run lint     # TypeScript 类型检查 (tsc --noEmit)
 ```
-
-## 项目规范
-
-### API 响应格式
-```json
-{
-  "code": 0,
-  "message": "success",
-  "data": {}
-}
-```
-
-### 错误码
-- 0: 成功
-- 1xxx: 认证错误
-- 2xxx: 用户错误
-- 3xxx: 商家错误
-- 4xxx: 订单错误
-- 9xxx: 系统错误
-
-### Git 提交规范
-```
-feat: 新功能
-fix: 修复
-docs: 文档
-style: 格式
-refactor: 重构
-test: 测试
-chore: 构建
-```
-
-## 常见问题
-
-### Q: 端口被占用
-```bash
-# 查找占用进程
-lsof -i :8000
-# 杀死进程
-kill -9 <PID>
-```
-
-### Q: CORS 错误
-确保 Django settings.py 中配置了：
-```python
-CORS_ALLOW_ALL_ORIGINS = True
-```
-
-### Q: Token 过期
-重新登录获取新 token，或实现 token 刷新机制。
-
-## 调试技巧
-
-### 后端调试
-```python
-# 在代码中添加断点
-import pdb; pdb.set_trace()
-
-# 查看 SQL 查询
-from django.db import connection
-print(connection.queries)
-```
-
-### 前端调试
-```typescript
-// 查看 API 响应
-console.log('API Response:', response);
-
-// React DevTools
-// 安装浏览器扩展
-```
-
-## 部署
-
-### 开发环境
-- 后端: http://localhost:8000
-- 前端: http://localhost:3000
-
-### 生产环境（待配置）
-- 使用 PostgreSQL
-- 配置 Nginx
-- 使用 Gunicorn
-- 配置 HTTPS
 
 ---
 
-更多信息请查看 [API 文档](02-api-design.md)
+## 项目规范
 
-## 生产环境部署
-
-### 环境变量配置
-```bash
-# 复制环境变量模板
-cp .env.example .env
-
-# 编辑 .env 文件，设置以下变量:
-# - SECRET_KEY: 使用 python -c "from django.core.management.utils import get_random_secret_key; print(get_random_secret_key())" 生成
-# - ALLOWED_HOSTS: 你的域名
-# - 数据库配置
+### 接口响应格式
+```json
+{ "code": 0, "message": "success", "data": { ... } }
+{ "code": 9001, "message": "参数错误", "data": null }
 ```
 
-### 生产环境运行
-```bash
-# 设置环境变量
-export DJANGO_SETTINGS_MODULE=config.settings_prod
+### 错误码约定
+| 范围 | 含义 |
+|------|------|
+| 0 | 成功 |
+| 1xxx | 认证/账号错误 |
+| 2xxx | 用户/地址错误 |
+| 3xxx | 商家/商品错误 |
+| 4xxx | 订单错误 |
+| 5xxx | 骑手/优惠券错误 |
+| 6xxx | 评价错误 |
+| 9xxx | 参数/系统错误 |
 
-# 收集静态文件
-python manage.py collectstatic
-
-# 使用 Gunicorn 运行
-gunicorn config.wsgi:application --bind 0.0.0.0:8000
+### Git 提交规范
+```
+feat:     新功能
+fix:      修复 bug
+docs:     仅文档变更
+refactor: 重构（不含功能变化）
+test:     测试相关
+chore:    构建/依赖更新
 ```
 
-### 安全检查
+---
+
+## 常见问题
+
+**Q: 端口被占用**
 ```bash
-python manage.py check --deploy
+lsof -i :8000 | grep LISTEN
+kill -9 <PID>
 ```
+
+**Q: uv 命令找不到**
+```bash
+curl -LsSf https://astral.sh/uv/install.sh | sh
+```
+
+**Q: 前端编译报类型错误**
+```bash
+cd fronted/<AppName>
+npm install    # 确保依赖已安装
+npm run lint   # 查看具体错误
+```
+
+**Q: 数据库被测试污染**
+测试使用独立内存数据库，不影响开发数据库。若需重置开发数据：
+```bash
+rm src/elm/db.sqlite3
+uv run python manage.py migrate
+uv run python manage.py init_data
+```
+
+---
+
+## 相关文档
+
+- [API 接口文档](API.md)
+- [部署文档](DEPLOY.md)
+- [测试文档](TESTING.md)

@@ -657,6 +657,6 @@ class OrderStateMachine:
 
 ## 12. 相关文档
 
-- [数据库设计](./01-database-design.md) - Order 表结构
-- [API 接口设计](./02-api-design.md) - 订单相关接口
+- [数据库设计](./设计说明书.md) - Order 表结构
+- [API 接口文档](./API.md) - 订单相关接口
 - [RBAC 权限设计](./03-rbac-design.md) - 订单操作权限

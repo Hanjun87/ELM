@@ -1,5 +1,8 @@
 # 05 - Django 模块划分设计
 
+> **注意**: 本文档为架构设计蓝图，部分内容（Celery、派单算法、支付对接、WebSocket Consumer）尚未实现。  
+> 已实现的模块和接口请参阅 [API.md](API.md) 和 [设计说明书.md](设计说明书.md)。
+
 ## 1. 项目结构
 
 ```
@@ -849,7 +852,7 @@ celery -A config beat -l info
 
 ## 8. 相关文档
 
-- [数据库设计](./01-database-design.md)
-- [API 接口设计](./02-api-design.md)
+- [数据库设计](./设计说明书.md)
+- [API 接口文档](./API.md)
 - [RBAC 权限设计](./03-rbac-design.md)
 - [订单生命周期](./04-order-lifecycle.md)

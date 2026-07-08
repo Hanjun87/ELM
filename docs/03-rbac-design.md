@@ -534,6 +534,6 @@ class RBACTestCase(TestCase):
 
 ## 11. 相关文档
 
-- [数据库设计](./01-database-design.md) - User, Role, UserRole 表结构
-- [API 接口设计](./02-api-design.md) - 各接口的权限要求
+- [数据库设计](./设计说明书.md) - User, Role, UserRole 表结构
+- [API 接口文档](./API.md) - 各接口的权限要求
 - [订单生命周期](./04-order-lifecycle.md) - 订单状态变更的权限控制
