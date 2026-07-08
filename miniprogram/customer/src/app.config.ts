@@ -10,6 +10,7 @@ export default defineAppConfig({
     'pages/address/index',
     'pages/coupons/index',
     'pages/order-progress/index',
+    'pages/favorites/index',
   ],
   window: {
     backgroundTextStyle: 'light',
@@ -23,10 +24,30 @@ export default defineAppConfig({
     backgroundColor: '#ffffff',
     borderStyle: 'white',
     list: [
-      { pagePath: 'pages/home/index', text: '首页' },
-      { pagePath: 'pages/orders/index', text: '订单' },
-      { pagePath: 'pages/cart/index', text: '购物车' },
-      { pagePath: 'pages/profile/index', text: '我的' },
+      {
+        pagePath: 'pages/home/index',
+        text: '首页',
+        iconPath: 'assets/tabbar/home.png',
+        selectedIconPath: 'assets/tabbar/home-active.png'
+      },
+      {
+        pagePath: 'pages/orders/index',
+        text: '订单',
+        iconPath: 'assets/tabbar/orders.png',
+        selectedIconPath: 'assets/tabbar/orders-active.png'
+      },
+      {
+        pagePath: 'pages/cart/index',
+        text: '购物车',
+        iconPath: 'assets/tabbar/cart.png',
+        selectedIconPath: 'assets/tabbar/cart-active.png'
+      },
+      {
+        pagePath: 'pages/profile/index',
+        text: '我的',
+        iconPath: 'assets/tabbar/profile.png',
+        selectedIconPath: 'assets/tabbar/profile-active.png'
+      },
     ],
   },
 });

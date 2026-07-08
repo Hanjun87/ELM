@@ -27,13 +27,23 @@ uv run python manage.py add_more_data    # 追加更多演示数据（可选）
 uv run python manage.py runserver        # http://localhost:8000
 ```
 
-**各前端**（各自独立，选择一个启动）：
+**微信小程序**（客户 / 商家 / 骑手，Taro，三端结构一致）：
 ```bash
-cd fronted/Customer && npm install && npm run dev   # http://localhost:3000
-cd fronted/Merchant && npm install && npm run dev   # http://localhost:3000
-cd fronted/Rider    && npm install && npm run dev   # http://localhost:3000
-cd fronted/Manager  && npm install && npm run dev   # http://localhost:3000
+cd miniprogram/customer   # 或 miniprogram/merchant、miniprogram/rider
+npm install
+npm run dev:weapp      # 监听编译到 dist/（或 npm run build:weapp 一次性构建）
 ```
+然后用微信开发者工具「导入项目」选择对应的 `miniprogram/<app>` 目录，AppID 用测试号即可。
+连本地后端需在「详情 → 本地设置」勾选「不校验合法域名」。详见 [miniprogram/customer/README.md](../miniprogram/customer/README.md)。
+
+> 三个小程序若沿用同一 AppID，无法在微信开发者工具中同时打开；真机/上传前需各自配置独立 AppID。
+
+**Web 管理后台**（Manager，唯一在用的 Web 前端）：
+```bash
+cd fronted/Manager && npm install && npm run dev   # http://localhost:3000
+```
+
+> `fronted/Customer`、`fronted/Merchant`、`fronted/Rider` 三个 Web 前端**已废弃**（功能由对应小程序取代，代码保留）。如需参考旧实现仍可 `npm run dev` 启动，但不再维护。
 
 ---
 
@@ -41,10 +51,10 @@ cd fronted/Manager  && npm install && npm run dev   # http://localhost:3000
 
 | 角色 | 手机号 | 密码 |
 |------|--------|------|
-| 客户 | 13800001000 | customer |
-| 商家 | 13800002000 | merchant |
-| 骑手 | 13800003000 | rider |
-| 管理员 | 13800004000 | manager |
+| 客户 | 13800000001 | customer |
+| 商家 | 13800000002 | merchant |
+| 骑手 | 13800000003 | rider |
+| 管理员 | 13800000004 | manager |
 
 ---
 
@@ -54,7 +64,7 @@ cd fronted/Manager  && npm install && npm run dev   # http://localhost:3000
 ```bash
 curl -X POST http://localhost:8000/api/v1/auth/login/ \
   -H "Content-Type: application/json" \
-  -d '{"phone": "13800001000", "password": "customer"}'
+  -d '{"phone": "13800000001", "password": "customer"}'
 ```
 
 ### 创建订单（获取 token 后）
@@ -168,6 +178,15 @@ rm src/elm/db.sqlite3
 uv run python manage.py migrate
 uv run python manage.py init_data
 ```
+
+**Q: 小程序登录失败 / 请求无响应**
+多数是没连上后端，而非账号问题：
+1. 确认后端已启动并监听 8000：`uv run python manage.py runserver 0.0.0.0:8000`
+2. 微信开发者工具「详情 → 本地设置」勾选「不校验合法域名、TLS、HTTPS 证书」（`http://localhost` 默认被拦）
+3. 真机预览时 `localhost` 不通，需把 `miniprogram/customer/src/api/config.ts` 的 `API_BASE_URL` 改为电脑局域网 IP
+
+**Q: 小程序装依赖报 ERESOLVE**
+Taro 4.0.9 的 React 插件 peer 要求 vite@^4，已在 package.json 锁定；若仍报错用 `npm install --legacy-peer-deps`。
 
 ---
 

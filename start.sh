@@ -49,8 +49,8 @@ start_backend() {
     fi
 
     log_info "后端启动于 http://localhost:8000"
-    log_info "测试账号: 客户 13800001000/customer · 商家 13800002000/merchant"
-    log_info "         骑手 13800003000/rider   · 管理员 13800004000/manager"
+    log_info "测试账号: 客户 13800000001/customer · 商家 13800000002/merchant"
+    log_info "         骑手 13800000003/rider   · 管理员 13800000004/manager"
     uv run python manage.py runserver
 }
 
@@ -63,6 +63,14 @@ start_frontend() {
         log_error "目录不存在: $DIR"
         exit 1
     fi
+
+    # Customer/Merchant/Rider 的 Web 前端已废弃，功能由对应小程序取代
+    case "$APP" in
+        Customer|Merchant|Rider)
+            log_warn "$APP Web 前端已废弃，功能已迁移到微信小程序 miniprogram/${APP,,}/"
+            log_warn "如需小程序开发：cd miniprogram/${APP,,} && npm install && npm run dev:weapp"
+            ;;
+    esac
 
     log_step "启动 $APP 前端..."
     cd "$DIR"
@@ -114,20 +122,23 @@ case "$TARGET" in
         echo ""
         echo "  目标选项:"
         echo "    backend   启动 Django 后端 (http://localhost:8000)"
-        echo "    customer  启动客户端前端   (http://localhost:3000)"
-        echo "    merchant  启动商家端前端   (http://localhost:3000)"
-        echo "    rider     启动骑手端前端   (http://localhost:3000)"
-        echo "    manager   启动管理端前端   (http://localhost:3000)"
+        echo "    manager   启动管理后台 Web (http://localhost:3000) —— 唯一在用的 Web 前端"
+        echo "    customer  [已废弃] 客户端 Web，功能已迁移到 miniprogram/customer"
+        echo "    merchant  [已废弃] 商家端 Web，功能已迁移到 miniprogram/merchant"
+        echo "    rider     [已废弃] 骑手端 Web，功能已迁移到 miniprogram/rider"
+        echo ""
+        echo "  客户/商家/骑手请用微信小程序:"
+        echo "    cd miniprogram/customer  (或 merchant/rider) && npm install && npm run dev:weapp"
         echo ""
         echo "  推荐启动顺序:"
         echo "    终端1: ./start.sh backend"
         echo "    终端2: ./start.sh customer  (或 merchant/rider/manager)"
         echo ""
         echo "  测试账号 (init_data 种子):"
-        echo "    客户:   13800001000 / customer"
-        echo "    商家:   13800002000 / merchant"
-        echo "    骑手:   13800003000 / rider"
-        echo "    管理员: 13800004000 / manager"
+        echo "    客户:   13800000001 / customer"
+        echo "    商家:   13800000002 / merchant"
+        echo "    骑手:   13800000003 / rider"
+        echo "    管理员: 13800000004 / manager"
         echo ""
 
         echo -n "请选择要启动的组件 [backend/customer/merchant/rider/manager]: "

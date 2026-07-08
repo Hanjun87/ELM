@@ -90,7 +90,7 @@ uv run coverage html   # 生成 htmlcov/index.html
 | 并发测试 | SQLite 测试环境下 `select_for_update()` 行为与 PostgreSQL 生产环境不完全一致，抢单竞态需在生产库人工验证 |
 | WebSocket | Channels 已配置但无 Consumer 实现，暂无相关测试 |
 | 支付/通知 | `payments`/`notifications` app 无 HTTP 端点，无集成测试 |
-| 前端测试 | 四个前端应用目前无自动化测试（仅 `tsc --noEmit` 类型检查），依赖手动验证 |
+| 客户端测试 | 三个小程序（customer/merchant/rider）与 Manager 后台目前无自动化测试（仅 `tsc --noEmit` 类型检查），依赖手动验证；已废弃的三个 Web 前端不再测试 |
 
 ---
 

@@ -3,6 +3,9 @@
 > 本文档基于当前代码实际实现，仅包含已对外暴露的接口。  
 > Base URL: `http://localhost:8000/api/v1`
 
+> **接口消费端**：客户 / 商家 / 骑手三端微信小程序（`miniprogram/customer`、`miniprogram/merchant`、`miniprogram/rider`，Taro 4 + React）与管理后台 Web（`fronted/Manager`，React 19 + Vite）。
+> `fronted/Customer`、`fronted/Merchant`、`fronted/Rider` 三个 Web 前端**已废弃**（功能由对应小程序取代，代码仅作参考保留）。后端接口本身不区分调用端，各端共用下列 API。
+
 ---
 
 ## 一、约定
@@ -53,14 +56,14 @@ POST /api/v1/auth/login/
 
 **请求**:
 ```json
-{ "phone": "13800001000", "password": "customer" }
+{ "phone": "13800000001", "password": "customer" }
 ```
 
 **响应** `data`:
 ```json
 {
   "user_id": 1,
-  "phone": "13800001000",
+  "phone": "13800000001",
   "access_token": "eyJ...",
   "refresh_token": "eyJ...",
   "expires_in": 7200,
@@ -107,7 +110,7 @@ GET /api/v1/auth/me/
 **响应** `data`:
 ```json
 {
-  "id": 1, "phone": "13800001000", "email": "",
+  "id": 1, "phone": "13800000001", "email": "",
   "avatar": null, "status": "active",
   "roles": ["customer"], "date_joined": "2026-07-01T10:00:00+08:00"
 }
@@ -775,9 +778,9 @@ GET /api/v1/admin/dashboard/
 ```json
 {
   "gmv": 7861.0,
-  "order_count": 42,
-  "merchant_count": 5,
-  "user_count": 18,
+  "order_count": 19,
+  "merchant_count": 21,
+  "user_count": 44,
   "cancelled_count": 0
 }
 ```

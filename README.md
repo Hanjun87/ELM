@@ -1,11 +1,12 @@
 # ELM 外卖平台
 
-一个完整的外卖平台系统，包含客户端、商家端、骑手端和管理端。
+一个完整的外卖平台系统：**3 个微信小程序（客户 / 商家 / 骑手）+ 1 个 Web 管理后台（Manager）**，共用一套 Django REST 后端。
+
+> `fronted/` 下的 Customer / Merchant / Rider 三个 Web 前端**已废弃**（功能由对应小程序取代，代码保留供参考），仅 Manager 管理后台仍为在用 Web 应用。
 
 ## 🎯 项目状态
 
 **当前版本**: v1.0.0 - MVP 完成  
-**完成度**: 85%  
 **状态**: ✅ 核心功能可用，可完整演示
 
 ## 🚀 快速开始
@@ -16,10 +17,20 @@ cd src/elm
 uv run python manage.py runserver
 ```
 
-### 启动前端
+### 微信小程序（客户 / 商家 / 骑手）
 ```bash
-cd fronted/Customer
-npm run dev
+cd miniprogram/customer   # 或 miniprogram/merchant、miniprogram/rider
+npm install
+npm run build:weapp        # 或 npm run dev:weapp 监听编译
+```
+用微信开发者工具「导入项目」选择对应的 `miniprogram/<app>` 目录（AppID 可用测试号）。
+连本地后端需在「详情 → 本地设置」勾选「不校验合法域名」。
+详见 [miniprogram/customer/README.md](miniprogram/customer/README.md)。
+
+### 启动 Web 管理后台（Manager）
+```bash
+cd fronted/Manager
+npm install && npm run dev   # http://localhost:3000
 ```
 
 ### 测试账号
@@ -30,25 +41,25 @@ npm run dev
 管理端: 13800000004 / manager
 ```
 
-访问 http://localhost:3000 开始体验
+Manager 后台访问 http://localhost:3000 开始体验。
 
 ## 📊 项目数据
 
 ### 后端
-- **Django Apps**: 13 个
-- **API 接口**: 25 个 (100% 实现)
+- **Django Apps**: 13 个（10 个已挂载路由）
 - **数据库模型**: 10+ 个
-- **测试数据**: 
-  - 商家: 5 个
-  - 商品: 20 个
-  - 订单: 41 个
-  - 用户: 6 个
+- **测试数据**（`init_data` + `add_more_data`）:
+  - 商家: 21 个
+  - 商品: 98 个
+  - 骑手: 11 个
+  - 客户: 11 个
+  - 订单: 19 个（覆盖全部 8 个状态）
+  - 评价: 5 条 · 优惠券: 6 张
 
-### 前端
-- **React 组件**: 40+ 个
-- **已对接组件**: 9 个核心组件
-- **API 驱动**: 100%
-- **Mock 数据**: 完全清理
+### 客户端
+- **微信小程序**: 3 个（Customer / Merchant / Rider，Taro 4 + React）
+- **Web 管理后台**: 1 个（Manager，React 19 + Vite）
+- **API 驱动**: 小程序三端与 Manager 均对接真实后端
 
 ## 🎯 核心功能
 
@@ -70,11 +81,15 @@ ELM/
 │   ├── orders/           # 订单系统
 │   ├── riders/           # 骑手管理
 │   └── ...
-├── fronted/              # React 前端
-│   ├── Customer/         # 客户端
-│   ├── Merchant/         # 商家端
-│   ├── Rider/            # 骑手端
-│   └── Manager/          # 管理端
+├── miniprogram/          # 微信小程序（在用）
+│   ├── customer/         # 客户端小程序 (Taro + React)
+│   ├── merchant/         # 商家端小程序 (Taro + React)
+│   └── rider/            # 骑手端小程序 (Taro + React)
+├── fronted/              # React Web 前端
+│   ├── Manager/          # 管理后台（在用）
+│   ├── Customer/         # 客户端 Web（已废弃，被小程序取代）
+│   ├── Merchant/         # 商家端 Web（已废弃，被小程序取代）
+│   └── Rider/            # 骑手端 Web（已废弃，被小程序取代）
 └── docs/                 # 设计文档
 ```
 
@@ -93,29 +108,31 @@ ELM/
 - Channels (WebSocket)
 - Celery (异步任务)
 
-### 前端
-- React 19
-- TypeScript
-- Tailwind CSS
-- Axios
-- Framer Motion
+### 微信小程序（客户 / 商家 / 骑手）
+- Taro 4 + React + TypeScript
+- weapp-tailwindcss（复用 Tailwind className）
+- Taro.request / Taro storage
+
+### Web 管理后台（Manager）
+- React 19 + TypeScript + Vite
+- Tailwind CSS + Axios
 
 ## 📈 下一步计划
 
-### 短期 (1-2 周)
-- [ ] WebSocket 实时通知
-- [ ] Rider 和 Merchant 端对接
-- [ ] 图片上传功能
+### 短期
+- [ ] WebSocket 实时通知（Channels 目前用 InMemory 层）
+- [ ] 小程序图片上传（接入 `/uploads`，商家商品编辑用）
+- [ ] 商家数据看板接入真实 analytics（当前为 Mock）
 
-### 中期 (3-4 周)
-- [ ] 支付接口集成
-- [ ] 评价系统完善
-- [ ] 优惠券功能
+### 中期
+- [ ] 支付接口集成（`payments` app 待挂路由）
+- [ ] 骑手异常上报后端接口
+- [ ] 优惠券打通（`promotions` app 待挂路由）
 
-### 长期 (1-2 月)
-- [ ] 单元测试
+### 长期
+- [ ] 补充单元测试
 - [ ] 性能优化
-- [ ] 生产部署
+- [ ] 生产部署（Postgres + Redis Channel 层）
 
 ## 📝 License
 

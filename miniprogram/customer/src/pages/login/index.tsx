@@ -80,7 +80,7 @@ export default function Login() {
           <Text className="block text-sm text-gray-500 mb-3 text-center">快速登录（测试账号）</Text>
           <View className="flex gap-2">
             <Button
-              onClick={() => quickLogin('13800001000', 'customer')}
+              onClick={() => quickLogin('13800000001', 'customer')}
               className="flex-1 px-3 py-2 text-sm border border-gray-200 rounded-lg bg-white"
             >
               客户账号

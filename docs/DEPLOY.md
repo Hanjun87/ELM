@@ -12,6 +12,12 @@
 | Web Server | Django runserver | Nginx + Daphne | ✅ Daphne + Nginx |
 | Docker | — | 可选 | ✅ 必须 |
 
+> **架构说明**：平台现聚焦「3 个微信小程序 + 1 个 Web 管理后台」：
+> - 客户小程序 `miniprogram/customer/`、商家小程序 `miniprogram/merchant/`、骑手小程序 `miniprogram/rider/`（均为 Taro 4 + React + TS，通过微信开发者工具构建）；
+> - 管理后台 `fronted/Manager/`（React 19 + Vite），是**唯一在用的 Web 前端**。
+>
+> `fronted/Customer/`、`fronted/Merchant/`、`fronted/Rider/` 三个 Web 前端**已废弃**（功能由对应小程序取代，代码仅作参考保留，不再部署）。下文涉及这三个 Web 前端的构建/部署步骤同样标注为已废弃。
+
 ---
 
 ## 一、Docker 部署（推荐）
@@ -46,7 +52,9 @@ CORS_ALLOWED_ORIGINS=http://localhost:3000,http://localhost:3001,http://localhos
 ### 1.3 启动服务
 
 ```bash
-# 构建并启动所有服务（后端 + 数据库 + Redis + 4个前端）
+# 构建并启动所有服务（后端 + 数据库 + Redis + 管理后台 Web）
+# 注：compose 中的 customer/merchant/rider 三个 Web 前端服务已废弃，
+#     微信小程序需在微信开发者工具中构建，不纳入 docker-compose。
 docker-compose up -d
 
 # 查看日志
@@ -58,18 +66,18 @@ docker-compose ps
 
 启动完成后访问：
 - **后端 API**: http://localhost:8000/api/v1/
-- **客户端**: http://localhost:3000
-- **商家端**: http://localhost:3001
-- **骑手端**: http://localhost:3002
-- **管理端**: http://localhost:3003
+- **管理后台（Web）**: http://localhost:3003
+- ~~客户端 Web: http://localhost:3000~~（已废弃，改用客户小程序）
+- ~~商家端 Web: http://localhost:3001~~（已废弃，改用商家小程序）
+- ~~骑手端 Web: http://localhost:3002~~（已废弃，改用骑手小程序）
 
 测试账号（自动初始化）：
 | 角色 | 手机号 | 密码 |
 |------|--------|------|
-| 客户 | 13800001000 | customer |
-| 商家 | 13800002000 | merchant |
-| 骑手 | 13800003000 | rider |
-| 管理员 | 13800004000 | manager |
+| 客户 | 13800000001 | customer |
+| 商家 | 13800000002 | merchant |
+| 骑手 | 13800000003 | rider |
+| 管理员 | 13800000004 | manager |
 
 ### 1.4 常用 Docker 命令
 
@@ -106,8 +114,10 @@ docker-compose exec postgres psql -U elm_user -d elm_db
 # 启动后端 + 挂载源码（热重载）
 docker-compose -f docker-compose.yml -f docker-compose.dev.yml up backend
 
-# 另一终端启动前端
-cd fronted/Customer && npm run dev
+# 另一终端启动管理后台 Web
+cd fronted/Manager && npm run dev
+
+# 小程序则在微信开发者工具中调试（见 2.3）
 ```
 
 开发模式特点：
@@ -141,36 +151,53 @@ uv run python manage.py migrate
 uv run python manage.py init_data
 
 # 追加更多演示数据（可选）
+# init_data + add_more_data 共计：21 商家、98 商品、11 骑手、11 客户、19 订单、5 评价、6 优惠券
 uv run python manage.py add_more_data
 
 # 启动开发服务器（HTTP，不含 WebSocket）
 uv run python manage.py runserver
 ```
 
-### 2.3 前端初始化（选一个角色）
+### 2.3 前端初始化
+
+#### 管理后台 Web（唯一在用的 Web 前端）
 
 ```bash
-# 客户端
-cd fronted/Customer && npm install && npm run dev
-
-# 商家端
-cd fronted/Merchant && npm install && npm run dev
-
-# 骑手端
-cd fronted/Rider && npm install && npm run dev
-
-# 管理端
-cd fronted/Manager && npm install && npm run dev
+cd fronted/Manager && npm install && npm run dev   # http://localhost:3000
 ```
 
-> 所有前端默认均运行在 `http://localhost:3000`，不可同时开多个。
+#### 微信小程序（客户 / 商家 / 骑手）
+
+```bash
+# 客户小程序
+cd miniprogram/customer && npm install && npm run dev:weapp   # watch 编译到 dist/
+
+# 商家小程序
+cd miniprogram/merchant && npm install && npm run dev:weapp
+
+# 骑手小程序
+cd miniprogram/rider && npm install && npm run dev:weapp
+```
+
+> 用微信开发者工具导入对应的 `miniprogram/<app>` 目录（`project.config.json` 的 `miniprogramRoot` 指向 `dist/`）。
+> 调试本地后端时，在 开发者工具 → 详情 → 本地设置 勾选「不校验合法域名」。
+
+#### 已废弃的 Web 前端（代码保留，不再部署）
+
+```bash
+# ⚠️ 以下三个 Web 前端已废弃，功能由对应小程序取代，仅作参考保留
+# cd fronted/Customer && npm install && npm run dev
+# cd fronted/Merchant && npm install && npm run dev
+# cd fronted/Rider    && npm install && npm run dev
+```
 
 ### 2.4 使用启动脚本
 
 ```bash
 # 项目根目录
 chmod +x start.sh
-./start.sh          # 交互式选择启动哪个前端
+./start.sh          # 交互式选择启动哪个前端（注：其中的客户/商家/骑手 Web 选项已废弃，
+                    #  日常开发使用管理后台 Web，三端功能改用对应微信小程序）
 ```
 
 ---
@@ -257,12 +284,30 @@ uv run gunicorn config.wsgi:application --bind 0.0.0.0:8000 --workers 4
 
 ### 3.4 前端生产构建
 
+#### 管理后台 Web（唯一需要 Web 部署的前端）
+
 ```bash
-# 各前端分别构建
-cd fronted/Customer && npm install && npm run build   # 产出 dist/
-cd fronted/Merchant && npm install && npm run build
-cd fronted/Rider    && npm install && npm run build
-cd fronted/Manager  && npm install && npm run build
+cd fronted/Manager && npm install && npm run build   # 产出 dist/，交由 Nginx 托管
+```
+
+#### 微信小程序（客户 / 商家 / 骑手）
+
+```bash
+# 一键构建到各自 dist/，随后在微信开发者工具中「上传」并提交微信审核发布
+cd miniprogram/customer && npm install && npm run build:weapp
+cd miniprogram/merchant && npm install && npm run build:weapp
+cd miniprogram/rider    && npm install && npm run build:weapp
+```
+
+> 小程序不经 Nginx 部署，产物由微信开发者工具上传至微信平台发布。
+
+#### 已废弃的 Web 前端（不再构建/部署）
+
+```bash
+# ⚠️ 已废弃，功能由对应小程序取代，代码仅作参考保留
+# cd fronted/Customer && npm install && npm run build
+# cd fronted/Merchant && npm install && npm run build
+# cd fronted/Rider    && npm install && npm run build
 ```
 
 ### 3.5 Nginx 配置
@@ -315,9 +360,9 @@ server {
         proxy_set_header Connection "upgrade";
     }
 
-    # 客户端前端（示例，各前端可部署在不同子域名）
+    # 管理后台 Web 前端（唯一在用的 Web 前端；小程序不经 Nginx）
     location / {
-        root /var/www/elm/customer;
+        root /var/www/elm/manager;
         try_files $uri $uri/ /index.html;
     }
 }

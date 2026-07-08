@@ -15,6 +15,11 @@ class Command(BaseCommand):
     help = '初始化测试数据'
 
     def handle(self, *args, **kwargs):
+        # Windows 控制台默认 GBK，无法输出 ✓/emoji，这里强制 stdout 用 UTF-8
+        try:
+            self.stdout._out.reconfigure(encoding='utf-8')
+        except Exception:
+            pass
         self.stdout.write('开始初始化数据...')
 
         # 1. 创建角色
@@ -233,8 +238,8 @@ class Command(BaseCommand):
         self.stdout.write(self.style.SUCCESS('数据初始化完成！'))
         self.stdout.write(self.style.SUCCESS('========================================'))
         self.stdout.write('\n默认账号:')
-        self.stdout.write('  客户端: 13800001000/customer')
-        self.stdout.write('  商家端: 13800002000/merchant')
-        self.stdout.write('  骑手端: 13800003000/rider')
-        self.stdout.write('  管理端: 13800004000/manager')
+        self.stdout.write('  客户端: 13800000001/customer')
+        self.stdout.write('  商家端: 13800000002/merchant')
+        self.stdout.write('  骑手端: 13800000003/rider')
+        self.stdout.write('  管理端: 13800000004/manager')
         self.stdout.write('========================================\n')

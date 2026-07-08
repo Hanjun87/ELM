@@ -16,6 +16,11 @@ class Command(BaseCommand):
     help = '添加更多测试数据（20+ 商家、10+ 用户、10+ 骑手）'
 
     def handle(self, *args, **kwargs):
+        # Windows 控制台默认 GBK，无法输出 ✓/emoji，这里强制 stdout 用 UTF-8
+        try:
+            self.stdout._out.reconfigure(encoding='utf-8')
+        except Exception:
+            pass
         self.stdout.write('开始添加更多测试数据...')
 
         # 获取现有数据
@@ -23,7 +28,7 @@ class Command(BaseCommand):
         merchant_role = Role.objects.get(name='merchant')
         rider_role = Role.objects.get(name='rider')
 
-        existing_customer = User.objects.get(phone='13800001000')
+        existing_customer = User.objects.get(phone='13800000001')
         existing_merchant_obj = Merchant.objects.first()
 
         # 1. 创建更多客户（10个额外客户）

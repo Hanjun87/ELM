@@ -7,8 +7,9 @@ import { toast } from '../../utils/toast';
 const TOOLS = [
   { icon: '📍', label: '收货地址', url: '/pages/address/index' },
   { icon: '🎫', label: '优惠券', url: '/pages/coupons/index' },
-  { icon: '❤️', label: '我的收藏', url: '' },
-  { icon: '🎧', label: '客服中心', url: '' },
+  { icon: '❤️', label: '我的收藏', url: '/pages/favorites/index' },
+  { icon: '💬', label: '我的评价', url: '' },
+  { icon: '🎧', label: '联系客服', url: '' },
 ];
 
 export default function Profile() {
