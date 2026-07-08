@@ -2,9 +2,29 @@
 __pycache__/
 *.py[oc]
 build/
-dist/
 wheels/
 *.egg-info
 
 # Virtual environments
 .venv
+
+# Node
+node_modules/
+npm-debug.log*
+yarn-error.log*
+
+# 前端 / 小程序构建产物
+# 注意: 根级忽略 dist/ 会同时覆盖各 fronted 和 miniprogram 的 dist
+dist/
+
+# 环境变量
+.env
+.env.local
+*.local
+
+# 编辑器 / 系统杂项
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
