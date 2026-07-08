@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { TrendingUp, TrendingDown, CreditCard, Receipt, Users, Store, Loader2 } from 'lucide-react';
+import { CreditCard, Receipt, Users, Store, Loader2 } from 'lucide-react';
 import { adminAPI } from '../api';
 import { toast } from '@shared';
 
@@ -29,53 +29,136 @@ export default function DashboardTab() {
   useEffect(() => { load(); }, [load]);
 
   if (loading) {
-    return <div className="px-4 pt-4"><div className="text-center py-16 text-gray-400"><Loader2 className="animate-spin mx-auto" size={28} /></div></div>;
+    return (
+      <div className="flex items-center justify-center h-64">
+        <Loader2 className="animate-spin text-gray-300" size={36} />
+      </div>
+    );
   }
 
-  const statCards = data ? [
-    { label: 'GMV (元)', value: data.gmv.toLocaleString('zh-CN', { maximumFractionDigits: 0 }), icon: CreditCard, color: 'bg-blue-50 text-[#0085FF]' },
-    { label: '总订单量', value: data.order_count.toLocaleString(), icon: Receipt, color: 'bg-orange-50 text-[#FF5000]' },
-    { label: '总用户数', value: data.user_count.toLocaleString(), icon: Users, color: 'bg-green-50 text-[#00B578]' },
-    { label: '入驻商家', value: data.merchant_count.toLocaleString(), icon: Store, color: 'bg-purple-50 text-purple-500' },
+  const stats = data ? [
+    {
+      label: 'GMV 总交易额',
+      value: `¥${data.gmv.toLocaleString('zh-CN', { maximumFractionDigits: 0 })}`,
+      icon: CreditCard,
+      bg: 'bg-blue-500',
+      change: '平台累计',
+    },
+    {
+      label: '总订单量',
+      value: data.order_count.toLocaleString(),
+      icon: Receipt,
+      bg: 'bg-orange-500',
+      change: `有效 ${(data.order_count - data.cancelled_count).toLocaleString()}`,
+    },
+    {
+      label: '注册用户',
+      value: data.user_count.toLocaleString(),
+      icon: Users,
+      bg: 'bg-emerald-500',
+      change: '全平台用户',
+    },
+    {
+      label: '入驻商家',
+      value: data.merchant_count.toLocaleString(),
+      icon: Store,
+      bg: 'bg-purple-500',
+      change: '营业中商家',
+    },
   ] : [];
 
+  const valid   = data ? data.order_count - data.cancelled_count : 0;
+  const cancel  = data?.cancelled_count ?? 0;
+  const total   = data?.order_count ?? 1;
+  const cancelRate = total > 0 ? Math.round((cancel / total) * 100) : 0;
+
   return (
-    <div className="px-4 pt-4 space-y-4">
-      <section className="bg-white rounded-[16px] p-4 shadow-[0_4px_12px_rgba(0,0,0,0.03)] border border-gray-50">
-        <h2 className="font-bold text-[15px] text-gray-900 mb-3">平台数据</h2>
-        <div className="grid grid-cols-2 gap-3">
-          {statCards.map((s, i) => {
-            const Icon = s.icon;
-            return (
-              <div key={i} className="bg-[#F8F9FA] p-3 rounded-xl flex flex-col gap-2">
-                <div className={`w-8 h-8 rounded-full flex items-center justify-center ${s.color}`}>
-                  <Icon size={18} />
-                </div>
-                <div>
-                  <span className="text-gray-500 text-[11px] font-medium">{s.label}</span>
-                  <div className="font-bold text-[20px] text-gray-900 leading-none mt-1">{s.value}</div>
+    <div className="space-y-6">
+      {/* Page Title */}
+      <div>
+        <h1 className="text-xl font-bold text-gray-900">数据看板</h1>
+        <p className="text-sm text-gray-500 mt-1">平台核心指标概览</p>
+      </div>
+
+      {/* Stat Cards */}
+      <div className="grid grid-cols-4 gap-5">
+        {stats.map((s, i) => {
+          const Icon = s.icon;
+          return (
+            <div key={i} className="bg-white rounded-xl p-5 shadow-sm border border-gray-100">
+              <div className="flex items-center justify-between mb-4">
+                <span className="text-sm text-gray-500">{s.label}</span>
+                <div className={`w-10 h-10 rounded-lg ${s.bg} bg-opacity-10 flex items-center justify-center`}>
+                  <Icon size={20} className={s.bg.replace('bg-', 'text-')} />
                 </div>
               </div>
-            );
-          })}
-        </div>
-      </section>
-
-      {data && (
-        <section className="bg-white rounded-[16px] p-4 shadow-[0_4px_12px_rgba(0,0,0,0.03)] border border-gray-50">
-          <h2 className="font-bold text-[15px] text-gray-900 mb-3">订单状态</h2>
-          <div className="flex gap-3">
-            <div className="flex-1 bg-green-50 rounded-xl p-3 text-center">
-              <div className="text-[22px] font-bold text-[#00B578]">{(data.order_count - data.cancelled_count).toLocaleString()}</div>
-              <div className="text-[11px] text-gray-500 mt-0.5">有效订单</div>
+              <p className="text-3xl font-bold text-gray-900 mb-1">{s.value}</p>
+              <p className="text-xs text-gray-400">{s.change}</p>
             </div>
-            <div className="flex-1 bg-red-50 rounded-xl p-3 text-center">
-              <div className="text-[22px] font-bold text-[#FF5000]">{data.cancelled_count.toLocaleString()}</div>
-              <div className="text-[11px] text-gray-500 mt-0.5">已取消</div>
+          );
+        })}
+      </div>
+
+      {/* Two-column: order status + quick metrics */}
+      <div className="grid grid-cols-3 gap-5">
+        {/* Order breakdown */}
+        <div className="col-span-2 bg-white rounded-xl p-5 shadow-sm border border-gray-100">
+          <h2 className="text-sm font-semibold text-gray-700 mb-4">订单状态分布</h2>
+          <div className="space-y-3">
+            <div className="flex items-center gap-3">
+              <span className="text-sm text-gray-500 w-20">有效订单</span>
+              <div className="flex-1 bg-gray-100 rounded-full h-2.5">
+                <div
+                  className="bg-emerald-500 h-2.5 rounded-full transition-all"
+                  style={{ width: `${total > 0 ? Math.round((valid / total) * 100) : 0}%` }}
+                />
+              </div>
+              <span className="text-sm font-medium text-gray-800 w-16 text-right">
+                {total > 0 ? Math.round((valid / total) * 100) : 0}%
+              </span>
+              <span className="text-sm text-gray-500 w-16 text-right">{valid.toLocaleString()} 单</span>
+            </div>
+            <div className="flex items-center gap-3">
+              <span className="text-sm text-gray-500 w-20">已取消</span>
+              <div className="flex-1 bg-gray-100 rounded-full h-2.5">
+                <div
+                  className="bg-red-400 h-2.5 rounded-full transition-all"
+                  style={{ width: `${cancelRate}%` }}
+                />
+              </div>
+              <span className="text-sm font-medium text-gray-800 w-16 text-right">{cancelRate}%</span>
+              <span className="text-sm text-gray-500 w-16 text-right">{cancel.toLocaleString()} 单</span>
             </div>
           </div>
-        </section>
-      )}
+        </div>
+
+        {/* Quick actions / metrics */}
+        <div className="bg-white rounded-xl p-5 shadow-sm border border-gray-100 flex flex-col gap-4">
+          <h2 className="text-sm font-semibold text-gray-700">平台健康度</h2>
+          <div className="flex-1 flex flex-col justify-center gap-3">
+            <div className="flex items-center justify-between py-2 border-b border-gray-50">
+              <span className="text-sm text-gray-500">取消率</span>
+              <span className={`text-sm font-bold ${cancelRate > 20 ? 'text-red-500' : 'text-emerald-500'}`}>
+                {cancelRate}%
+              </span>
+            </div>
+            <div className="flex items-center justify-between py-2 border-b border-gray-50">
+              <span className="text-sm text-gray-500">商家数 / 用户数</span>
+              <span className="text-sm font-bold text-gray-700">
+                {data ? `${data.merchant_count} / ${data.user_count}` : '—'}
+              </span>
+            </div>
+            <div className="flex items-center justify-between py-2">
+              <span className="text-sm text-gray-500">人均 GMV</span>
+              <span className="text-sm font-bold text-[#0085FF]">
+                {data && data.user_count > 0
+                  ? `¥${(data.gmv / data.user_count).toFixed(1)}`
+                  : '—'}
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }

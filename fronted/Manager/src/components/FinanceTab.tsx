@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Wallet, TrendingUp } from 'lucide-react';
+import { Wallet, TrendingUp, DollarSign } from 'lucide-react';
 import { toast } from '@shared';
 
 interface Settlement {
@@ -14,136 +14,166 @@ const mockSettlements: Settlement[] = [
   { id: 4, merchantName: '美味坊餐饮', period: '2026-06-17 ~ 2026-06-23', orders: 398, revenue: '15,420.00', commission: '1,542.00', net: '13,878.00', status: 'paid' },
 ];
 
-const mockPlatformConfig = {
-  commissionRate: 10,
-  minWithdraw: 100,
-  deliveryTimeout: 30,
-  autoConfirmDays: 7,
-};
-
 export default function FinanceTab() {
-  const [config, setConfig] = useState(mockPlatformConfig);
   const [settlementList, setSettlementList] = useState<Settlement[]>(mockSettlements);
-  const [activeTab, setActiveTab] = useState('settlements');
+  const [activeFilter, setActiveFilter]     = useState<'all' | 'pending' | 'paid'>('all');
+  const [commissionRate, setCommissionRate] = useState('10');
+
+  const filtered = settlementList.filter(s => activeFilter === 'all' || s.status === activeFilter);
+  const pending  = settlementList.filter(s => s.status === 'pending');
 
   const paySettlement = (id: number) => {
     setSettlementList(prev => prev.map(s => s.id === id ? { ...s, status: 'paid' as const } : s));
-    toast('结算款已打款');
+    toast('打款成功');
   };
 
-  const updateConfig = (key: string, value: number) => {
-    setConfig(prev => ({ ...prev, [key]: value }));
+  const saveCommission = () => {
+    const rate = parseFloat(commissionRate);
+    if (isNaN(rate) || rate < 0 || rate > 100) return toast('请输入有效的百分比（0~100）');
+    toast('平台抽佣比例已更新');
   };
 
   return (
-    <div className="space-y-4 pb-4">
-      {/* Revenue Summary */}
-      <section className="px-4 pt-4">
-        <div className="bg-[#0085FF] text-white p-5 rounded-[16px] shadow-md relative overflow-hidden">
-          <div className="absolute top-0 right-0 p-4 opacity-10">
-            <TrendingUp size={60} />
+    <div className="space-y-5">
+      <div>
+        <h1 className="text-xl font-bold text-gray-900">财务结算</h1>
+        <p className="text-sm text-gray-500 mt-0.5">管理商家结算与平台收入</p>
+      </div>
+
+      {/* Top metrics */}
+      <div className="grid grid-cols-3 gap-5">
+        <div className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl p-5 text-white shadow-lg">
+          <div className="flex items-center justify-between mb-3">
+            <span className="text-sm opacity-90">待结算金额</span>
+            <Wallet size={20} className="opacity-80" />
           </div>
-          <p className="text-white/80 text-[13px] mb-1">本月平台营收 (元)</p>
-          <h2 className="text-[36px] font-bold mb-4">&#165;385,200.00</h2>
-          <div className="grid grid-cols-3 gap-3">
-            <div className="bg-white/10 backdrop-blur-md p-3 rounded-xl border border-white/20">
-              <p className="text-white/80 text-[11px] mb-0.5">佣金收入</p>
-              <span className="text-[18px] font-bold">&#165;38,520</span>
-            </div>
-            <div className="bg-white/10 backdrop-blur-md p-3 rounded-xl border border-white/20">
-              <p className="text-white/80 text-[11px] mb-0.5">配送抽成</p>
-              <span className="text-[18px] font-bold">&#165;12,840</span>
-            </div>
-            <div className="bg-white/10 backdrop-blur-md p-3 rounded-xl border border-white/20">
-              <p className="text-white/80 text-[11px] mb-0.5">广告收入</p>
-              <span className="text-[18px] font-bold">&#165;5,600</span>
-            </div>
+          <p className="text-3xl font-bold">
+            ¥{pending.reduce((sum, s) => sum + parseFloat(s.net.replace(/,/g, '')), 0).toLocaleString('zh-CN', { maximumFractionDigits: 0 })}
+          </p>
+          <p className="text-xs opacity-75 mt-2">{pending.length} 笔待处理</p>
+        </div>
+        <div className="bg-white rounded-xl p-5 shadow-sm border border-gray-100">
+          <div className="flex items-center justify-between mb-3">
+            <span className="text-sm text-gray-500">本周平台收入</span>
+            <TrendingUp size={20} className="text-emerald-500" />
+          </div>
+          <p className="text-3xl font-bold text-gray-900">¥12,450</p>
+          <p className="text-xs text-gray-400 mt-2">佣金收入</p>
+        </div>
+        <div className="bg-white rounded-xl p-5 shadow-sm border border-gray-100">
+          <div className="flex items-center justify-between mb-3">
+            <span className="text-sm text-gray-500">累计结算笔数</span>
+            <DollarSign size={20} className="text-blue-500" />
+          </div>
+          <p className="text-3xl font-bold text-gray-900">{settlementList.length}</p>
+          <p className="text-xs text-gray-400 mt-2">历史记录</p>
+        </div>
+      </div>
+
+      {/* Two columns: platform config + settlements */}
+      <div className="grid grid-cols-[280px_1fr] gap-5">
+        {/* Left: Platform config */}
+        <div className="bg-white rounded-xl p-5 shadow-sm border border-gray-100 space-y-4">
+          <h2 className="text-sm font-semibold text-gray-700">平台设置</h2>
+          <div>
+            <label className="block text-xs text-gray-500 mb-1.5">抽佣比例（%）</label>
+            <input
+              type="number"
+              value={commissionRate}
+              onChange={e => setCommissionRate(e.target.value)}
+              className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-blue-100"
+              placeholder="10"
+            />
+          </div>
+          <button
+            onClick={saveCommission}
+            className="w-full bg-[#0085FF] text-white py-2 rounded-lg text-sm font-semibold hover:bg-blue-600 transition-colors"
+          >
+            保存设置
+          </button>
+          <div className="pt-3 border-t border-gray-100">
+            <p className="text-xs text-gray-400 mb-2">当前佣金率</p>
+            <p className="text-2xl font-bold text-gray-900">{commissionRate}%</p>
           </div>
         </div>
-      </section>
 
-      {/* Platform Config */}
-      <section className="px-4">
-        <div className="bg-white rounded-[16px] p-4 shadow-[0_4px_12px_rgba(0,0,0,0.03)] border border-gray-50">
-          <div className="flex items-center gap-2 mb-4">
-            <Wallet size={20} className="text-[#FF5000]" />
-            <h2 className="font-bold text-[16px] text-gray-900">平台配置</h2>
-          </div>
-          {[
-            { key: 'commissionRate', label: '抽成比例 (%)', value: config.commissionRate, min: 1, max: 30, suffix: '%' },
-            { key: 'minWithdraw', label: '最低提现 (元)', value: config.minWithdraw, min: 10, max: 1000, suffix: '元' },
-            { key: 'deliveryTimeout', label: '配送超时 (分钟)', value: config.deliveryTimeout, min: 10, max: 120, suffix: '分钟' },
-            { key: 'autoConfirmDays', label: '自动确认 (天)', value: config.autoConfirmDays, min: 1, max: 30, suffix: '天' },
-          ].map(item => (
-            <div key={item.key} className="flex items-center justify-between py-3 border-b border-gray-100 last:border-0">
-              <span className="text-[14px] font-medium text-gray-800">{item.label}</span>
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={() => updateConfig(item.key, Math.max(item.min, item.value - (item.key === 'commissionRate' ? 1 : item.key === 'minWithdraw' ? 10 : 5)))}
-                  className="w-7 h-7 rounded-full border border-gray-200 flex items-center justify-center text-gray-500 active:bg-gray-50 text-lg leading-none"
-                >−</button>
-                <span className="text-[16px] font-bold text-gray-900 min-w-[50px] text-center">{item.value}{item.suffix}</span>
-                <button
-                  onClick={() => updateConfig(item.key, Math.min(item.max, item.value + (item.key === 'commissionRate' ? 1 : item.key === 'minWithdraw' ? 10 : 5)))}
-                  className="w-7 h-7 rounded-full bg-[#0085FF] text-white flex items-center justify-center active:bg-blue-600 text-lg leading-none"
-                >+</button>
-              </div>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      {/* Settlement Tabs */}
-      <section className="px-4">
-        <div className="flex gap-2 mb-3">
-          {['settlements', 'history'].map(tab => (
-            <button
-              key={tab}
-              onClick={() => setActiveTab(tab)}
-              className={`px-4 py-1.5 rounded-full text-[13px] font-bold transition-colors ${activeTab === tab ? 'bg-[#0085FF] text-white' : 'bg-white text-gray-500 border border-gray-200'}`}
-            >
-              {tab === 'settlements' ? '待结算' : '已结算'}
-            </button>
-          ))}
-        </div>
-
-        <div className="space-y-3">
-          {settlementList
-            .filter(s => activeTab === 'settlements' ? s.status === 'pending' : s.status === 'paid')
-            .map(s => (
-              <div key={s.id} className="bg-white rounded-[16px] p-4 shadow-[0_4px_12px_rgba(0,0,0,0.03)] border border-gray-50">
-                <div className="flex justify-between items-start mb-3">
-                  <div>
-                    <h3 className="font-bold text-[15px] text-gray-900">{s.merchantName}</h3>
-                    <p className="text-[11px] text-gray-500">{s.period}</p>
-                  </div>
-                  <span className={`px-2 py-1 rounded-full text-[11px] font-bold ${s.status === 'paid' ? 'bg-green-50 text-[#00B578]' : 'bg-yellow-50 text-yellow-600'}`}>
-                    {s.status === 'paid' ? '已打款' : '待打款'}
-                  </span>
-                </div>
-                <div className="grid grid-cols-3 gap-2 bg-[#F8F9FA] rounded-xl p-3 mb-3">
-                  <div className="text-center">
-                    <div className="text-[10px] text-gray-400">订单数</div>
-                    <div className="text-[15px] font-bold text-gray-900">{s.orders}</div>
-                  </div>
-                  <div className="text-center">
-                    <div className="text-[10px] text-gray-400">营业额</div>
-                    <div className="text-[15px] font-bold text-gray-900">&#165;{s.revenue}</div>
-                  </div>
-                  <div className="text-center">
-                    <div className="text-[10px] text-gray-400">结算金额</div>
-                    <div className="text-[15px] font-bold text-[#FF5000]">&#165;{s.net}</div>
-                  </div>
-                </div>
-                {s.status === 'pending' && (
-                  <button onClick={() => paySettlement(s.id)} className="w-full bg-[#0085FF] text-white py-2.5 rounded-[12px] font-bold text-[14px] shadow-[0_4px_12px_rgba(0,133,255,0.2)] active:scale-[0.98]">
-                    确认打款
-                  </button>
-                )}
-              </div>
+        {/* Right: Settlements */}
+        <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+          {/* Tabs */}
+          <div className="flex gap-2 p-4 border-b border-gray-100">
+            {[
+              { key: 'all', label: '全部' },
+              { key: 'pending', label: '待结算' },
+              { key: 'paid', label: '已结算' },
+            ].map(t => (
+              <button
+                key={t.key}
+                onClick={() => setActiveFilter(t.key as any)}
+                className={`px-4 py-1.5 rounded-lg text-xs font-semibold transition-colors ${
+                  activeFilter === t.key ? 'bg-[#0085FF] text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                }`}
+              >
+                {t.label}
+              </button>
             ))}
+            <p className="ml-auto text-xs text-gray-400 py-2">共 {filtered.length} 条</p>
+          </div>
+
+          {/* Table */}
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="bg-gray-50 border-b border-gray-100">
+                  <th className="text-left px-4 py-2.5 font-semibold text-gray-600 text-xs">商家名称</th>
+                  <th className="text-left px-4 py-2.5 font-semibold text-gray-600 text-xs">周期</th>
+                  <th className="text-center px-4 py-2.5 font-semibold text-gray-600 text-xs">订单</th>
+                  <th className="text-right px-4 py-2.5 font-semibold text-gray-600 text-xs">营业额</th>
+                  <th className="text-right px-4 py-2.5 font-semibold text-gray-600 text-xs">佣金</th>
+                  <th className="text-right px-4 py-2.5 font-semibold text-gray-600 text-xs">结算金额</th>
+                  <th className="text-center px-4 py-2.5 font-semibold text-gray-600 text-xs">状态</th>
+                  <th className="text-center px-4 py-2.5 font-semibold text-gray-600 text-xs">操作</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filtered.map(s => (
+                  <tr key={s.id} className="border-b border-gray-50 hover:bg-gray-50 transition-colors">
+                    <td className="px-4 py-3 font-medium text-gray-900">{s.merchantName}</td>
+                    <td className="px-4 py-3 text-gray-500 text-xs">{s.period}</td>
+                    <td className="px-4 py-3 text-center text-gray-700">{s.orders}</td>
+                    <td className="px-4 py-3 text-right text-gray-700">¥{s.revenue}</td>
+                    <td className="px-4 py-3 text-right text-orange-500">-¥{s.commission}</td>
+                    <td className="px-4 py-3 text-right font-semibold text-gray-900">¥{s.net}</td>
+                    <td className="px-4 py-3 text-center">
+                      {s.status === 'pending' ? (
+                        <span className="inline-flex px-2 py-1 rounded bg-yellow-50 text-yellow-600 text-xs font-semibold">待结算</span>
+                      ) : (
+                        <span className="inline-flex px-2 py-1 rounded bg-emerald-50 text-emerald-600 text-xs font-semibold">已结算</span>
+                      )}
+                    </td>
+                    <td className="px-4 py-3 text-center">
+                      {s.status === 'pending' ? (
+                        <button
+                          onClick={() => paySettlement(s.id)}
+                          className="px-3 py-1.5 bg-[#0085FF] text-white text-xs font-semibold rounded-lg hover:bg-blue-600 transition-colors"
+                        >
+                          确认打款
+                        </button>
+                      ) : (
+                        <span className="text-xs text-gray-400">—</span>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+                {filtered.length === 0 && (
+                  <tr>
+                    <td colSpan={8} className="py-12 text-center text-gray-400 text-sm">暂无结算记录</td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
         </div>
-      </section>
+      </div>
     </div>
   );
 }

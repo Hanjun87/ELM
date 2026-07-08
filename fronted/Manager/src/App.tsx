@@ -1,5 +1,8 @@
 import { useState } from 'react';
-import { LayoutDashboard, Users, FileCheck, DollarSign, Image, Bell, LogOut } from 'lucide-react';
+import {
+  LayoutDashboard, Users, FileCheck, DollarSign, Image,
+  LogOut, ChevronRight, Menu
+} from 'lucide-react';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import Login from './components/Login';
 import DashboardTab from './components/DashboardTab';
@@ -9,12 +12,25 @@ import FinanceTab from './components/FinanceTab';
 import BannersTab from './components/BannersTab';
 import { Toast, showModal } from '@shared';
 
+const NAV_ITEMS = [
+  { id: 'dashboard', label: '数据看板', icon: LayoutDashboard },
+  { id: 'users',     label: '用户管理', icon: Users },
+  { id: 'audit',     label: '商家审核', icon: FileCheck },
+  { id: 'finance',   label: '财务结算', icon: DollarSign },
+  { id: 'content',   label: '内容运营', icon: Image },
+];
+
 function MainApp() {
-  const { isAuthenticated, loading, logout } = useAuth();
-  const [activeTab, setActiveTab] = useState('dashboard');
+  const { isAuthenticated, loading, logout, user } = useAuth();
+  const [activeTab, setActiveTab]   = useState('dashboard');
+  const [sidebarOpen, setSidebar]   = useState(true);
 
   if (loading) {
-    return <div className="min-h-screen flex items-center justify-center text-gray-400">加载中...</div>;
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="text-gray-400 text-sm">加载中...</div>
+      </div>
+    );
   }
 
   if (!isAuthenticated) {
@@ -22,49 +38,108 @@ function MainApp() {
   }
 
   const handleLogout = () => {
-    showModal('退出登录', '确认退出管理后台？', <p className="text-[13px] text-gray-500">退出后需要重新登录。</p>, logout);
+    showModal(
+      '退出登录',
+      '确认退出管理后台？',
+      <p className="text-sm text-gray-500">退出后需要重新登录。</p>,
+      logout,
+    );
   };
 
-  const tabs = [
-    { id: 'dashboard', label: '大盘', icon: LayoutDashboard },
-    { id: 'users', label: '用户', icon: Users },
-    { id: 'audit', label: '审核', icon: FileCheck },
-    { id: 'content', label: '内容', icon: Image },
-    { id: 'finance', label: '财务', icon: DollarSign },
-  ];
+  const activeLabel = NAV_ITEMS.find(n => n.id === activeTab)?.label ?? '';
 
   return (
-    <div className="max-w-md mx-auto bg-[#F5F5F5] min-h-screen relative shadow-2xl flex flex-col font-sans selection:bg-blue-200">
+    <div className="flex h-screen bg-gray-50 font-sans overflow-hidden">
       <Toast />
-      <header className="bg-white shadow-[0_2px_8px_rgba(0,0,0,0.04)] fixed top-0 w-full max-w-md h-14 z-50 flex justify-between items-center px-4">
-        <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-full bg-blue-50 border border-blue-100 flex items-center justify-center text-[#0085FF] font-bold text-sm">管</div>
-          <span className="font-bold text-[18px] text-[#0085FF] tracking-tight">平台管理中心</span>
+
+      {/* ── Sidebar ── */}
+      <aside
+        className={`${sidebarOpen ? 'w-56' : 'w-16'} flex-shrink-0 bg-white border-r border-gray-100 flex flex-col transition-all duration-200`}
+      >
+        {/* Logo */}
+        <div className="h-14 flex items-center px-4 border-b border-gray-100 gap-3 overflow-hidden">
+          <div className="w-8 h-8 rounded-lg bg-[#0085FF] flex items-center justify-center text-white font-bold text-sm flex-shrink-0">
+            ELM
+          </div>
+          {sidebarOpen && (
+            <span className="font-bold text-gray-900 text-[15px] whitespace-nowrap">平台管理中心</span>
+          )}
         </div>
-        <button onClick={handleLogout} className="text-gray-400 active:scale-95 transition-transform p-1">
-          <LogOut size={20} />
-        </button>
-      </header>
-      <main className="flex-1 mt-14 pb-28 overflow-y-auto">
-        {activeTab === 'dashboard' && <DashboardTab />}
-        {activeTab === 'users' && <UsersTab />}
-        {activeTab === 'audit' && <AuditTab />}
-        {activeTab === 'content' && <BannersTab />}
-        {activeTab === 'finance' && <FinanceTab />}
-      </main>
-      <nav className="fixed bottom-0 w-full max-w-md z-50 flex justify-around items-center px-2 py-2 bg-white shadow-[0_-8px_24px_rgba(0,0,0,0.04)] rounded-t-[20px] border-t border-gray-100 pb-[calc(env(safe-area-inset-bottom,0px)+8px)]">
-        {tabs.map(tab => {
-          const isActive = activeTab === tab.id;
-          const Icon = tab.icon;
-          return (
-            <button key={tab.id} onClick={() => setActiveTab(tab.id)}
-              className={`flex flex-col items-center justify-center px-4 py-1.5 rounded-2xl transition-all duration-200 ${isActive ? 'bg-blue-50 text-[#0085FF] scale-105' : 'text-gray-400 hover:text-gray-600'}`}>
-              <Icon size={24} strokeWidth={isActive ? 2.5 : 2} className={isActive ? 'text-[#0085FF]' : 'text-gray-400'} />
-              <span className={`text-[11px] mt-1 ${isActive ? 'text-[#0085FF] font-bold' : 'font-medium'}`}>{tab.label}</span>
-            </button>
-          );
-        })}
-      </nav>
+
+        {/* Nav */}
+        <nav className="flex-1 py-3 space-y-0.5 px-2">
+          {NAV_ITEMS.map(({ id, label, icon: Icon }) => {
+            const active = activeTab === id;
+            return (
+              <button
+                key={id}
+                onClick={() => setActiveTab(id)}
+                title={label}
+                className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors
+                  ${active
+                    ? 'bg-blue-50 text-[#0085FF]'
+                    : 'text-gray-500 hover:bg-gray-50 hover:text-gray-700'
+                  }`}
+              >
+                <Icon size={18} strokeWidth={active ? 2.5 : 2} className="flex-shrink-0" />
+                {sidebarOpen && <span className="whitespace-nowrap">{label}</span>}
+                {active && sidebarOpen && <ChevronRight size={14} className="ml-auto opacity-60" />}
+              </button>
+            );
+          })}
+        </nav>
+
+        {/* User / Logout */}
+        <div className="p-3 border-t border-gray-100">
+          <button
+            onClick={handleLogout}
+            title="退出登录"
+            className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-gray-500 hover:bg-red-50 hover:text-red-500 transition-colors"
+          >
+            <LogOut size={18} className="flex-shrink-0" />
+            {sidebarOpen && <span className="whitespace-nowrap">退出登录</span>}
+          </button>
+        </div>
+      </aside>
+
+      {/* ── Right Panel ── */}
+      <div className="flex-1 flex flex-col min-w-0">
+        {/* Header */}
+        <header className="h-14 bg-white border-b border-gray-100 flex items-center px-6 gap-4 flex-shrink-0">
+          <button
+            onClick={() => setSidebar(v => !v)}
+            className="text-gray-400 hover:text-gray-600 transition-colors"
+          >
+            <Menu size={20} />
+          </button>
+
+          {/* Breadcrumb */}
+          <div className="flex items-center gap-1.5 text-sm text-gray-500">
+            <span>管理后台</span>
+            <ChevronRight size={14} />
+            <span className="text-gray-900 font-medium">{activeLabel}</span>
+          </div>
+
+          <div className="ml-auto flex items-center gap-3">
+            <div className="text-right">
+              <p className="text-xs text-gray-400">管理员</p>
+              <p className="text-sm font-medium text-gray-800">{user?.phone ?? '—'}</p>
+            </div>
+            <div className="w-8 h-8 rounded-full bg-[#0085FF] flex items-center justify-center text-white text-xs font-bold">
+              管
+            </div>
+          </div>
+        </header>
+
+        {/* Content */}
+        <main className="flex-1 overflow-y-auto p-6">
+          {activeTab === 'dashboard' && <DashboardTab />}
+          {activeTab === 'users'     && <UsersTab />}
+          {activeTab === 'audit'     && <AuditTab />}
+          {activeTab === 'finance'   && <FinanceTab />}
+          {activeTab === 'content'   && <BannersTab />}
+        </main>
+      </div>
     </div>
   );
 }
