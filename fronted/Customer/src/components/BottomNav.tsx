@@ -1,8 +1,6 @@
 import { Compass, ShoppingCart, FileText, User } from 'lucide-react';
 import React from 'react';
 import { TabType } from '../types';
-import { getCartCount, subscribe, StoreState } from '../store';
-import { useState, useEffect } from 'react';
 
 interface BottomNavProps {
   activeTab: TabType;

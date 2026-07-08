@@ -62,7 +62,7 @@ function MainApp() {
               onFavorites={() => setCurrentRoute('favorites')}
             />
           )}
-          <BottomNav activeTab={activeTab} onTabChange={setActiveTab} cartCount={cartCount} />
+          <BottomNav activeTab={activeTab} onChange={setActiveTab} cartCount={cartCount} />
         </>
       )}
       {currentRoute === 'storeDetail' && <StoreDetail storeId={storeId} onBack={back} onCheckout={() => setCurrentRoute('checkout')} onCartUpdate={(count) => setCartCount(count)} />}
