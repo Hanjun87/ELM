@@ -1,6 +1,7 @@
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
+from django.db import transaction
 from .models import Address
 from .serializers import AddressSerializer
 
@@ -22,12 +23,13 @@ def address_list(request):
         serializer = AddressSerializer(data=request.data)
         if not serializer.is_valid():
             return Response({'code': 9001, 'message': '参数错误', 'data': None}, status=400)
-        
-        # 如果设置为默认，取消其他默认地址
-        if serializer.validated_data.get('is_default'):
-            Address.objects.filter(user=request.user, is_default=True).update(is_default=False)
-        
-        address = serializer.save(user=request.user)
+
+        with transaction.atomic():
+            # 如果设置为默认，取消其他默认地址
+            if serializer.validated_data.get('is_default'):
+                Address.objects.filter(user=request.user, is_default=True).update(is_default=False)
+
+            address = serializer.save(user=request.user)
         return Response({
             'code': 0,
             'message': '地址创建成功',
@@ -52,11 +54,12 @@ def address_detail(request, pk):
         serializer = AddressSerializer(address, data=request.data, partial=True)
         if not serializer.is_valid():
             return Response({'code': 9001, 'message': '参数错误', 'data': None}, status=400)
-        
-        if serializer.validated_data.get('is_default'):
-            Address.objects.filter(user=request.user, is_default=True).update(is_default=False)
-        
-        serializer.save()
+
+        with transaction.atomic():
+            if serializer.validated_data.get('is_default'):
+                Address.objects.filter(user=request.user, is_default=True).update(is_default=False)
+
+            serializer.save()
         return Response({'code': 0, 'message': '更新成功', 'data': serializer.data})
     
     elif request.method == 'DELETE':
@@ -72,9 +75,10 @@ def set_default(request, pk):
         address = Address.objects.get(pk=pk, user=request.user)
     except Address.DoesNotExist:
         return Response({'code': 2003, 'message': '地址不存在', 'data': None}, status=404)
-    
-    Address.objects.filter(user=request.user, is_default=True).update(is_default=False)
-    address.is_default = True
-    address.save()
-    
+
+    with transaction.atomic():
+        Address.objects.filter(user=request.user, is_default=True).update(is_default=False)
+        address.is_default = True
+        address.save()
+
     return Response({'code': 0, 'message': '设置成功', 'data': None})

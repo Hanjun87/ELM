@@ -22,7 +22,10 @@ def merchant_review_list(request, merchant_id):
 def review_create(request):
     """创建评价"""
     order_id = request.data.get('order')
-    rating = request.data.get('rating')
+    try:
+        rating = int(request.data.get('rating', 0))
+    except (TypeError, ValueError):
+        rating = 0
     content = request.data.get('content', '')
     images = request.data.get('images')
 

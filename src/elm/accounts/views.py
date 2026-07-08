@@ -7,6 +7,8 @@ from django.contrib.auth import authenticate
 from .models import User
 from .serializers import UserSerializer, LoginSerializer
 
+SELF_REGISTERABLE_ROLES = {'customer', 'merchant', 'rider'}
+
 
 @api_view(['POST'])
 @permission_classes([AllowAny])
@@ -65,10 +67,13 @@ def register(request):
     phone = request.data.get('phone')
     password = request.data.get('password')
     role_name = request.data.get('role', 'customer')
-    
+
     if not phone or not password:
         return Response({'code': 9001, 'message': '手机号和密码不能为空', 'data': None}, status=400)
-    
+
+    if role_name not in SELF_REGISTERABLE_ROLES:
+        return Response({'code': 9001, 'message': '角色不存在', 'data': None}, status=400)
+
     if User.objects.filter(phone=phone).exists():
         return Response({'code': 2001, 'message': '手机号已注册', 'data': None}, status=400)
 

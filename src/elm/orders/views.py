@@ -1,7 +1,7 @@
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.response import Response
-from django.db import models, transaction
+from django.db import models, transaction, IntegrityError
 from django.utils import timezone
 from merchants.models import Merchant
 from products.models import Product
@@ -109,20 +109,31 @@ def order_create(request):
             delivery_fee = float(merchant.delivery_fee)
             paid_amount = total_amount + delivery_fee
 
-            order_no = f"OD{timezone.now().strftime('%Y%m%d%H%M%S')}{random.randint(1000, 9999)}"
-            order = Order.objects.create(
-                order_no=order_no,
-                customer=request.user,
-                merchant=merchant,
-                address_snapshot=address_snapshot,
-                items_snapshot=items_snapshot,
-                total_amount=total_amount,
-                delivery_fee=delivery_fee,
-                paid_amount=paid_amount,
-                status='pending',
-                note=note
-            )
-    except (TypeError, ValueError):
+            if total_amount < float(merchant.min_order):
+                return Response({'code': 3005, 'message': f'未达起送金额 ¥{merchant.min_order}', 'data': None}, status=400)
+
+            for attempt in range(3):
+                order_no = f"OD{timezone.now().strftime('%Y%m%d%H%M%S')}{random.randint(1000, 9999)}"
+                try:
+                    order = Order.objects.create(
+                        order_no=order_no,
+                        customer=request.user,
+                        merchant=merchant,
+                        address_snapshot=address_snapshot,
+                        items_snapshot=items_snapshot,
+                        total_amount=total_amount,
+                        delivery_fee=delivery_fee,
+                        paid_amount=paid_amount,
+                        status='pending',
+                        note=note
+                    )
+                    break
+                except IntegrityError:
+                    if attempt == 2:
+                        raise
+            else:
+                return Response({'code': 9999, 'message': '系统繁忙，请重试', 'data': None}, status=500)
+    except (TypeError, ValueError, IntegrityError):
         return Response({'code': 9001, 'message': '参数错误', 'data': None}, status=400)
 
     serializer = OrderSerializer(order)
@@ -165,11 +176,14 @@ def order_cancel(request, pk):
 
 
 def _restore_stock(order):
-    """取消/拒单时恢复商品库存"""
+    """取消/拒单时恢复商品库存并回滚销量"""
     for item in order.items_snapshot:
-        Product.objects.filter(pk=item.get('product_id')).update(
-            stock=models.F('stock') + item.get('quantity', 0)
-        )
+        qty = item.get('quantity', 0)
+        if qty > 0:
+            Product.objects.filter(pk=item.get('product_id')).update(
+                stock=models.F('stock') + qty,
+                sales_count=models.F('sales_count') - qty,
+            )
 
 
 # Merchant 端接口
@@ -198,6 +212,9 @@ def merchant_accept_order(request, pk):
     """商家接单"""
     try:
         merchant = request.user.merchant
+    except Merchant.DoesNotExist:
+        return Response({'code': 3001, 'message': '商家不存在', 'data': None}, status=404)
+    try:
         order = Order.objects.get(pk=pk, merchant=merchant, status='paid')
         order.status = 'accepted'
         order.accepted_at = timezone.now()
@@ -213,6 +230,9 @@ def merchant_reject_order(request, pk):
     """商家拒单"""
     try:
         merchant = request.user.merchant
+    except Merchant.DoesNotExist:
+        return Response({'code': 3001, 'message': '商家不存在', 'data': None}, status=404)
+    try:
         order = Order.objects.get(pk=pk, merchant=merchant, status='paid')
         with transaction.atomic():
             order.status = 'cancelled'
@@ -229,6 +249,9 @@ def merchant_prepare_order(request, pk):
     """商家确认出餐（accepted -> preparing）"""
     try:
         merchant = request.user.merchant
+    except Merchant.DoesNotExist:
+        return Response({'code': 3001, 'message': '商家不存在', 'data': None}, status=404)
+    try:
         order = Order.objects.get(pk=pk, merchant=merchant, status='accepted')
         order.status = 'preparing'
         order.save()
@@ -243,6 +266,9 @@ def merchant_ready_order(request, pk):
     """商家出餐完成（preparing -> ready）"""
     try:
         merchant = request.user.merchant
+    except Merchant.DoesNotExist:
+        return Response({'code': 3001, 'message': '商家不存在', 'data': None}, status=404)
+    try:
         order = Order.objects.get(pk=pk, merchant=merchant, status='preparing')
         order.status = 'ready'
         order.prepared_at = timezone.now()
@@ -257,6 +283,8 @@ def merchant_ready_order(request, pk):
 @permission_classes([IsAuthenticated])
 def rider_available_orders(request):
     """骑手可接单列表"""
+    if not request.user.has_role('rider'):
+        return Response({'code': 5001, 'message': '骑手信息不存在', 'data': None}, status=404)
     orders = Order.objects.filter(status='ready', rider__isnull=True).order_by('-created_at')
     serializer = OrderSerializer(orders, many=True)
     return Response({'code': 0, 'message': 'success', 'data': {'items': serializer.data, 'total': orders.count()}})
@@ -286,11 +314,16 @@ def rider_my_orders(request):
 @permission_classes([IsAuthenticated])
 def rider_grab_order(request, pk):
     """骑手抢单"""
+    from riders.models import Rider
     try:
         rider = request.user.rider
-        order = Order.objects.get(pk=pk, status='ready', rider__isnull=True)
-        order.rider = rider
-        order.save()
+    except Rider.DoesNotExist:
+        return Response({'code': 5001, 'message': '骑手信息不存在', 'data': None}, status=404)
+    try:
+        with transaction.atomic():
+            order = Order.objects.select_for_update().get(pk=pk, status='ready', rider__isnull=True)
+            order.rider = rider
+            order.save(update_fields=['rider'])
         return Response({'code': 0, 'message': '抢单成功', 'data': OrderSerializer(order).data})
     except Order.DoesNotExist:
         return Response({'code': 4002, 'message': '订单不存在或已被抢', 'data': None}, status=404)
@@ -300,8 +333,12 @@ def rider_grab_order(request, pk):
 @permission_classes([IsAuthenticated])
 def rider_pickup_order(request, pk):
     """骑手取餐"""
+    from riders.models import Rider
     try:
         rider = request.user.rider
+    except Rider.DoesNotExist:
+        return Response({'code': 5001, 'message': '骑手信息不存在', 'data': None}, status=404)
+    try:
         order = Order.objects.get(pk=pk, rider=rider, status='ready')
         order.status = 'picked'
         order.picked_at = timezone.now()
@@ -315,8 +352,12 @@ def rider_pickup_order(request, pk):
 @permission_classes([IsAuthenticated])
 def rider_deliver_order(request, pk):
     """骑手送达"""
+    from riders.models import Rider
     try:
         rider = request.user.rider
+    except Rider.DoesNotExist:
+        return Response({'code': 5001, 'message': '骑手信息不存在', 'data': None}, status=404)
+    try:
         order = Order.objects.get(pk=pk, rider=rider, status='picked')
         order.status = 'delivered'
         order.delivered_at = timezone.now()
