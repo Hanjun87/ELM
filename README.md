@@ -2,8 +2,6 @@
 
 一个完整的外卖平台系统：**3 个微信小程序（客户 / 商家 / 骑手）+ 1 个 Web 管理后台（Manager）**，共用一套 Django REST 后端。
 
-> `fronted/` 下的 Customer / Merchant / Rider 三个 Web 前端**已废弃**（功能由对应小程序取代，代码保留供参考），仅 Manager 管理后台仍为在用 Web 应用。
-
 ## 🎯 项目状态
 
 **当前版本**: v1.0.0 - MVP 完成  
@@ -19,13 +17,13 @@ uv run python manage.py runserver
 
 ### 微信小程序（客户 / 商家 / 骑手）
 ```bash
-cd miniprogram/customer   # 或 miniprogram/merchant、miniprogram/rider
+cd apps/customer   # 或 apps/merchant、apps/rider
 npm install
 npm run build:weapp        # 或 npm run dev:weapp 监听编译
 ```
-用微信开发者工具「导入项目」选择对应的 `miniprogram/<app>` 目录（AppID 可用测试号）。
+用微信开发者工具「导入项目」选择对应的 `apps/<app>` 目录（AppID 可用测试号）。
 连本地后端需在「详情 → 本地设置」勾选「不校验合法域名」。
-详见 [miniprogram/customer/README.md](miniprogram/customer/README.md)。
+详见 [apps/customer/README.md](apps/customer/README.md)。
 
 ### 启动 Web 管理后台（Manager）
 ```bash
@@ -81,15 +79,13 @@ ELM/
 │   ├── orders/           # 订单系统
 │   ├── riders/           # 骑手管理
 │   └── ...
-├── miniprogram/          # 微信小程序（在用）
+├── apps/                 # 微信小程序（客户/商家/骑手三端）
 │   ├── customer/         # 客户端小程序 (Taro + React)
 │   ├── merchant/         # 商家端小程序 (Taro + React)
 │   └── rider/            # 骑手端小程序 (Taro + React)
 ├── fronted/              # React Web 前端
-│   ├── Manager/          # 管理后台（在用）
-│   ├── Customer/         # 客户端 Web（已废弃，被小程序取代）
-│   ├── Merchant/         # 商家端 Web（已废弃，被小程序取代）
-│   └── Rider/            # 骑手端 Web（已废弃，被小程序取代）
+│   ├── Manager/          # 管理后台（唯一在用的 Web 前端）
+│   └── shared/           # 共享组件（Manager 使用）
 └── docs/                 # 设计文档
 ```
 

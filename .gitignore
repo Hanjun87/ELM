@@ -14,7 +14,7 @@ npm-debug.log*
 yarn-error.log*
 
 # 前端 / 小程序构建产物
-# 注意: 根级忽略 dist/ 会同时覆盖各 fronted 和 miniprogram 的 dist
+# 注意: 根级忽略 dist/ 会同时覆盖各 fronted 和 apps 的 dist
 dist/
 
 # 环境变量
@@ -28,6 +28,3 @@ Thumbs.db
 .idea/
 .vscode/
 *.swp
-
-# 文档目录（由需求分析/说明书自动生成，不纳入版本控制）
-docs/

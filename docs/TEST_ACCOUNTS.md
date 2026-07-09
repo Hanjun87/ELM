@@ -33,10 +33,10 @@ docker-compose exec backend python manage.py add_more_data
 | **管理员** | 13800000004 | manager | 平台管理员，可查看后台数据、封禁用户 |
 
 **登录入口**：
-- 客户端 / 商家端 / 骑手端：微信小程序（`miniprogram/customer`、`miniprogram/merchant`、`miniprogram/rider`），用微信开发者工具导入对应目录后登录
+- 客户端 / 商家端 / 骑手端：微信小程序（`apps/customer`、`apps/merchant`、`apps/rider`），用微信开发者工具导入对应目录后登录
 - 管理端: Manager Web 后台 http://localhost:3000（`cd fronted/Manager && npm run dev`）
 
-> 三端旧 Web 前端（`fronted/Customer|Merchant|Rider`）已废弃，功能由上述小程序取代。
+> 三端旧 Web 前端（`[deleted]|Merchant|Rider`）已废弃，功能由上述小程序取代。
 
 ---
 

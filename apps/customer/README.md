@@ -32,7 +32,7 @@
 ## 一、安装依赖
 
 ```bash
-cd miniprogram/customer
+cd apps/customer
 npm install
 ```
 
@@ -52,7 +52,7 @@ npm run build:weapp   # 生产：一次性编译到 dist/
 
 1. 下载安装 **微信开发者工具**（稳定版）：https://developers.weixin.qq.com/miniprogram/dev/devtools/download.html
 2. 打开工具 → **导入项目**
-3. **目录**：选择本目录 `miniprogram/customer`（不是 dist；工具会读 `project.config.json` 里的 `miniprogramRoot`）
+3. **目录**：选择本目录 `apps/customer`（不是 dist；工具会读 `project.config.json` 里的 `miniprogramRoot`）
 4. **AppID**：
    - 有小程序 AppID 就填自己的
    - 没有就点「**测试号**」（点 AppID 输入框旁的「测试号」链接即可，无需注册）

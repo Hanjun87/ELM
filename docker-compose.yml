@@ -62,42 +62,6 @@ services:
       retries: 3
       start_period: 30s
 
-  customer:
-    build:
-      context: .
-      dockerfile: fronted/Customer/Dockerfile
-      args:
-        VITE_API_BASE_URL: ${CUSTOMER_API_BASE_URL:-}
-    restart: unless-stopped
-    ports:
-      - "3000:80"
-    depends_on:
-      - backend
-
-  merchant:
-    build:
-      context: .
-      dockerfile: fronted/Merchant/Dockerfile
-      args:
-        VITE_API_BASE_URL: ${MERCHANT_API_BASE_URL:-}
-    restart: unless-stopped
-    ports:
-      - "3001:80"
-    depends_on:
-      - backend
-
-  rider:
-    build:
-      context: .
-      dockerfile: fronted/Rider/Dockerfile
-      args:
-        VITE_API_BASE_URL: ${RIDER_API_BASE_URL:-}
-    restart: unless-stopped
-    ports:
-      - "3002:80"
-    depends_on:
-      - backend
-
   manager:
     build:
       context: .

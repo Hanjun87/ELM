@@ -2,8 +2,8 @@
 # Merchant 和 Rider 小程序快速搭建脚本
 
 set -e
-BASE_DIR="/e/ELM/miniprogram"
-cd "$BASE_DIR"
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+cd "$SCRIPT_DIR"
 
 echo "开始搭建 Merchant 商家端..."
 

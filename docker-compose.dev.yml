@@ -33,14 +33,5 @@ services:
       disable: true
 
   # 开发时前端直接本地启动，不走 Docker
-  customer:
-    profiles: ["production"]
-
-  merchant:
-    profiles: ["production"]
-
-  rider:
-    profiles: ["production"]
-
   manager:
     profiles: ["production"]

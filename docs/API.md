@@ -3,8 +3,8 @@
 > 本文档基于当前代码实际实现，仅包含已对外暴露的接口。  
 > Base URL: `http://localhost:8000/api/v1`
 
-> **接口消费端**：客户 / 商家 / 骑手三端微信小程序（`miniprogram/customer`、`miniprogram/merchant`、`miniprogram/rider`，Taro 4 + React）与管理后台 Web（`fronted/Manager`，React 19 + Vite）。
-> `fronted/Customer`、`fronted/Merchant`、`fronted/Rider` 三个 Web 前端**已废弃**（功能由对应小程序取代，代码仅作参考保留）。后端接口本身不区分调用端，各端共用下列 API。
+> **接口消费端**：客户 / 商家 / 骑手三端微信小程序（`apps/customer`、`apps/merchant`、`apps/rider`，Taro 4 + React）与管理后台 Web（`fronted/Manager`，React 19 + Vite）。
+> `[deleted]`、`[deleted]`、`[deleted]` 三个 Web 前端**已废弃**（功能由对应小程序取代，代码仅作参考保留）。后端接口本身不区分调用端，各端共用下列 API。
 
 ---
 

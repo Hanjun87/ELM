@@ -13,10 +13,10 @@
 | Docker | — | 可选 | ✅ 必须 |
 
 > **架构说明**：平台现聚焦「3 个微信小程序 + 1 个 Web 管理后台」：
-> - 客户小程序 `miniprogram/customer/`、商家小程序 `miniprogram/merchant/`、骑手小程序 `miniprogram/rider/`（均为 Taro 4 + React + TS，通过微信开发者工具构建）；
+> - 客户小程序 `apps/customer/`、商家小程序 `apps/merchant/`、骑手小程序 `apps/rider/`（均为 Taro 4 + React + TS，通过微信开发者工具构建）；
 > - 管理后台 `fronted/Manager/`（React 19 + Vite），是**唯一在用的 Web 前端**。
 >
-> `fronted/Customer/`、`fronted/Merchant/`、`fronted/Rider/` 三个 Web 前端**已废弃**（功能由对应小程序取代，代码仅作参考保留，不再部署）。下文涉及这三个 Web 前端的构建/部署步骤同样标注为已废弃。
+> `[deleted]/`、`[deleted]/`、`[deleted]/` 三个 Web 前端**已废弃**（功能由对应小程序取代，代码仅作参考保留，不再部署）。下文涉及这三个 Web 前端的构建/部署步骤同样标注为已废弃。
 
 ---
 
@@ -167,25 +167,25 @@ cd fronted/Manager && npm install && npm run dev   # http://localhost:3000
 
 ```bash
 # 客户小程序
-cd miniprogram/customer && npm install && npm run dev:weapp   # watch 编译到 dist/
+cd apps/customer && npm install && npm run dev:weapp   # watch 编译到 dist/
 
 # 商家小程序
-cd miniprogram/merchant && npm install && npm run dev:weapp
+cd apps/merchant && npm install && npm run dev:weapp
 
 # 骑手小程序
-cd miniprogram/rider && npm install && npm run dev:weapp
+cd apps/rider && npm install && npm run dev:weapp
 ```
 
-> 用微信开发者工具导入对应的 `miniprogram/<app>` 目录（`project.config.json` 的 `miniprogramRoot` 指向 `dist/`）。
+> 用微信开发者工具导入对应的 `apps/<app>` 目录（`project.config.json` 的 `miniprogramRoot` 指向 `dist/`）。
 > 调试本地后端时，在 开发者工具 → 详情 → 本地设置 勾选「不校验合法域名」。
 
 #### 已废弃的 Web 前端（代码保留，不再部署）
 
 ```bash
 # ⚠️ 以下三个 Web 前端已废弃，功能由对应小程序取代，仅作参考保留
-# cd fronted/Customer && npm install && npm run dev
-# cd fronted/Merchant && npm install && npm run dev
-# cd fronted/Rider    && npm install && npm run dev
+# cd [deleted] && npm install && npm run dev
+# cd [deleted] && npm install && npm run dev
+# cd [deleted]    && npm install && npm run dev
 ```
 
 ### 2.4 使用启动脚本
@@ -291,9 +291,9 @@ cd fronted/Manager && npm install && npm run build   # 产出 dist/，交由 Ngi
 
 ```bash
 # 一键构建到各自 dist/，随后在微信开发者工具中「上传」并提交微信审核发布
-cd miniprogram/customer && npm install && npm run build:weapp
-cd miniprogram/merchant && npm install && npm run build:weapp
-cd miniprogram/rider    && npm install && npm run build:weapp
+cd apps/customer && npm install && npm run build:weapp
+cd apps/merchant && npm install && npm run build:weapp
+cd apps/rider    && npm install && npm run build:weapp
 ```
 
 > 小程序不经 Nginx 部署，产物由微信开发者工具上传至微信平台发布。
@@ -302,9 +302,9 @@ cd miniprogram/rider    && npm install && npm run build:weapp
 
 ```bash
 # ⚠️ 已废弃，功能由对应小程序取代，代码仅作参考保留
-# cd fronted/Customer && npm install && npm run build
-# cd fronted/Merchant && npm install && npm run build
-# cd fronted/Rider    && npm install && npm run build
+# cd [deleted] && npm install && npm run build
+# cd [deleted] && npm install && npm run build
+# cd [deleted]    && npm install && npm run build
 ```
 
 ### 3.5 Nginx 配置

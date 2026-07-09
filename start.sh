@@ -64,14 +64,6 @@ start_frontend() {
         exit 1
     fi
 
-    # Customer/Merchant/Rider 的 Web 前端已废弃，功能由对应小程序取代
-    case "$APP" in
-        Customer|Merchant|Rider)
-            log_warn "$APP Web 前端已废弃，功能已迁移到微信小程序 miniprogram/${APP,,}/"
-            log_warn "如需小程序开发：cd miniprogram/${APP,,} && npm install && npm run dev:weapp"
-            ;;
-    esac
-
     log_step "启动 $APP 前端..."
     cd "$DIR"
 
@@ -93,25 +85,16 @@ case "$TARGET" in
     backend)
         start_backend
         ;;
-    customer)
-        start_frontend "Customer"
-        ;;
-    merchant)
-        start_frontend "Merchant"
-        ;;
-    rider)
-        start_frontend "Rider"
-        ;;
     manager)
         start_frontend "Manager"
         ;;
     all)
-        log_warn "同时启动所有服务，前端端口均为 3000（会冲突），建议分窗口启动"
+        log_warn "同时启动所有服务，建议分窗口启动"
         start_backend &
         BACKEND_PID=$!
         log_info "等待后端就绪..."
         sleep 3
-        log_info "如需启动前端，请在新终端执行: ./start.sh customer"
+        log_info "如需启动 Manager 前端，请在新终端执行: ./start.sh manager"
         wait $BACKEND_PID
         ;;
     menu|*)
@@ -122,17 +105,14 @@ case "$TARGET" in
         echo ""
         echo "  目标选项:"
         echo "    backend   启动 Django 后端 (http://localhost:8000)"
-        echo "    manager   启动管理后台 Web (http://localhost:3000) —— 唯一在用的 Web 前端"
-        echo "    customer  [已废弃] 客户端 Web，功能已迁移到 miniprogram/customer"
-        echo "    merchant  [已废弃] 商家端 Web，功能已迁移到 miniprogram/merchant"
-        echo "    rider     [已废弃] 骑手端 Web，功能已迁移到 miniprogram/rider"
+        echo "    manager   启动管理后台 Web (http://localhost:3000)"
         echo ""
         echo "  客户/商家/骑手请用微信小程序:"
-        echo "    cd miniprogram/customer  (或 merchant/rider) && npm install && npm run dev:weapp"
+        echo "    cd apps/customer  (或 merchant/rider) && npm install && npm run dev:weapp"
         echo ""
         echo "  推荐启动顺序:"
         echo "    终端1: ./start.sh backend"
-        echo "    终端2: ./start.sh customer  (或 merchant/rider/manager)"
+        echo "    终端2: ./start.sh manager"
         echo ""
         echo "  测试账号 (init_data 种子):"
         echo "    客户:   13800000001 / customer"
@@ -141,10 +121,10 @@ case "$TARGET" in
         echo "    管理员: 13800000004 / manager"
         echo ""
 
-        echo -n "请选择要启动的组件 [backend/customer/merchant/rider/manager]: "
+        echo -n "请选择要启动的组件 [backend/manager]: "
         read -r CHOICE
         case "$CHOICE" in
-            backend|customer|merchant|rider|manager)
+            backend|manager)
                 "$0" "$CHOICE"
                 ;;
             *)
