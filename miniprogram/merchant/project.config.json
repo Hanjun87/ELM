@@ -29,7 +29,7 @@
     "disableSWC": true
   },
   "compileType": "miniprogram",
-  "libVersion": "3.5.5",
+  "libVersion": "3.16.2",
   "condition": {},
   "simulatorPluginLibVersion": {},
   "packOptions": {

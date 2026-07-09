@@ -1,6 +1,6 @@
 {
   "libVersion": "3.16.2",
-  "projectname": "customer",
+  "projectname": "merchant",
   "condition": {},
   "setting": {
     "urlCheck": false,

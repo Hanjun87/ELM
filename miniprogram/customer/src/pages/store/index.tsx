@@ -5,6 +5,12 @@ import { productAPI, merchantAPI } from '../../api';
 import { toast } from '../../utils/toast';
 import { cartStore } from '../../cartStore';
 
+interface Category {
+  id: number;
+  name: string;
+  icon?: string;
+}
+
 interface Product {
   id: number;
   name: string;
@@ -12,12 +18,15 @@ interface Product {
   image: string;
   price: string;
   original_price?: string;
+  category?: Category;
 }
 
 export default function Store() {
   const [storeId, setStoreId] = useState<number>(0);
   const [merchant, setMerchant] = useState<any>(null);
   const [products, setProducts] = useState<Product[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [activeCat, setActiveCat] = useState<number | 'all'>('all');
   const [cart, setCart] = useState<Record<number, number>>({});
   const [loading, setLoading] = useState(true);
   const [favorited, setFavorited] = useState(false);
@@ -34,12 +43,14 @@ export default function Store() {
 
   const loadData = async (id: number) => {
     try {
-      const [merchantRes, productsRes]: any[] = await Promise.all([
+      const [merchantRes, productsRes, categoriesRes]: any[] = await Promise.all([
         merchantAPI.detail(id),
         productAPI.list(id),
+        productAPI.categories(),
       ]);
       if (merchantRes.code === 0) setMerchant(merchantRes.data);
       if (productsRes.code === 0) setProducts(productsRes.data.items || []);
+      if (categoriesRes.code === 0) setCategories(categoriesRes.data || []);
     } catch (error) {
       toast('加载失败');
     } finally {
@@ -79,6 +90,11 @@ export default function Store() {
     });
   };
 
+  const filtered =
+    activeCat === 'all'
+      ? products
+      : products.filter((p) => p.category?.id === activeCat);
+
   const totalItems = Object.values(cart).reduce((s, n) => s + n, 0);
   const totalAmount = products.reduce(
     (sum, p) => sum + parseFloat(p.price) * (cart[p.id] || 0),
@@ -106,9 +122,9 @@ export default function Store() {
   }
 
   return (
-    <View className="w-full min-h-screen bg-gray-50 pb-24">
+    <View className="w-full min-h-screen bg-gray-50 flex flex-col">
       {/* 店铺头图+收藏按钮 */}
-      <View className="relative">
+      <View className="relative flex-shrink-0">
         <Image src={merchant?.logo} mode="aspectFill" className="w-full h-48" />
         <View
           onClick={toggleFavorite}
@@ -120,7 +136,7 @@ export default function Store() {
         </View>
       </View>
 
-      <View className="bg-white p-4">
+      <View className="bg-white p-4 flex-shrink-0">
         <Text className="block text-xl font-bold">{merchant?.store_name}</Text>
         <View className="flex items-center gap-4 mt-2">
           <Text className="text-sm text-gray-600">⭐ {merchant?.rating}</Text>
@@ -129,9 +145,57 @@ export default function Store() {
         </View>
       </View>
 
-      <View className="mt-2 bg-white p-4">
-        <Text className="block font-bold mb-3">商品列表</Text>
-        {products.map((product) => {
+      {/* 左侧分类栏 + 右侧商品列表 */}
+      <View className="flex flex-1 overflow-hidden mt-2">
+        {/* 左侧分类 */}
+        <ScrollView
+          scrollY
+          className="w-[84px] bg-gray-50 flex-shrink-0 border-r border-gray-100"
+        >
+          <View
+            onClick={() => setActiveCat('all')}
+            className={`py-3.5 px-2 text-center border-l-2 ${
+              activeCat === 'all'
+                ? 'bg-white border-l-[#0085FF]'
+                : 'border-l-transparent'
+            }`}
+          >
+            <Text
+              className={`text-[12px] ${
+                activeCat === 'all'
+                  ? 'text-[#0085FF] font-bold'
+                  : 'text-gray-500'
+              }`}
+            >
+              全部
+            </Text>
+          </View>
+          {categories.map((c) => (
+            <View
+              key={c.id}
+              onClick={() => setActiveCat(c.id)}
+              className={`py-3.5 px-2 text-center border-l-2 ${
+                activeCat === c.id
+                  ? 'bg-white border-l-[#0085FF]'
+                  : 'border-l-transparent'
+              }`}
+            >
+              <Text
+                className={`text-[12px] ${
+                  activeCat === c.id
+                    ? 'text-[#0085FF] font-bold'
+                    : 'text-gray-500'
+                }`}
+              >
+                {c.name}
+              </Text>
+            </View>
+          ))}
+        </ScrollView>
+
+        {/* 右侧商品列表 */}
+        <ScrollView scrollY className="flex-1 bg-white p-4">
+          {filtered.map((product) => {
           const count = cart[product.id] || 0;
           return (
             <View
@@ -180,6 +244,8 @@ export default function Store() {
             </View>
           );
         })}
+        <View className="h-6" />
+        </ScrollView>
       </View>
 
       {/* 底部购物车栏 */}

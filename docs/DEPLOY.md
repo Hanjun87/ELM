@@ -67,9 +67,6 @@ docker-compose ps
 启动完成后访问：
 - **后端 API**: http://localhost:8000/api/v1/
 - **管理后台（Web）**: http://localhost:3003
-- ~~客户端 Web: http://localhost:3000~~（已废弃，改用客户小程序）
-- ~~商家端 Web: http://localhost:3001~~（已废弃，改用商家小程序）
-- ~~骑手端 Web: http://localhost:3002~~（已废弃，改用骑手小程序）
 
 测试账号（自动初始化）：
 | 角色 | 手机号 | 密码 |
